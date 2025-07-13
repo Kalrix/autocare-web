@@ -20,7 +20,7 @@ export default function LoginPage() {
       .from('admin_users')
       .select('*')
       .eq('username', username)
-      .eq('password', password) // 🔒 plaintext match (NOT secure for production)
+      .eq('password', password) // 
       .single();
 
     if (fetchError || !data) {
