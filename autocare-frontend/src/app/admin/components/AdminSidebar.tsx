@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   Menu,
   X,
@@ -18,7 +18,6 @@ import {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [crmMenuOpen, setCrmMenuOpen] = useState(false);
@@ -104,32 +103,27 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      <main className="flex-1 p-6"></main>
+      <main className="flex-1 p-6" />
     </div>
   );
 }
 
-function NavItem({
-  icon,
-  label,
-  open,
-  href,
-  onClick = () => {},
-  hasSub = false,
-}: {
+type NavItemProps = {
   icon: React.ReactNode;
   label: string;
   open: boolean;
   href?: string;
   onClick?: () => void;
   hasSub?: boolean;
-}) {
+};
+
+function NavItem({ icon, label, open, href, onClick, hasSub }: NavItemProps) {
   const router = useRouter();
 
   const handleClick = () => {
     if (!open) return;
     if (href) router.push(href);
-    else onClick();
+    else if (onClick) onClick();
   };
 
   return (
@@ -144,21 +138,22 @@ function NavItem({
   );
 }
 
-function Submenu({
-  icon,
-  label,
-  open,
-  expanded,
-  setExpanded,
-  items,
-}: {
+type SubmenuItem = {
+  label: string;
+  path: string;
+  disabled?: boolean;
+};
+
+type SubmenuProps = {
   icon: React.ReactNode;
   label: string;
   open: boolean;
   expanded: boolean;
   setExpanded: (value: boolean) => void;
-  items: { label: string; path: string; disabled?: boolean }[];
-}) {
+  items: SubmenuItem[];
+};
+
+function Submenu({ icon, label, open, expanded, setExpanded, items }: SubmenuProps) {
   const router = useRouter();
 
   return (

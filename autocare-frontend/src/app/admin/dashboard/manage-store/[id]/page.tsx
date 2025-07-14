@@ -11,7 +11,48 @@ import { Checkbox } from "@/components/ui/checkbox";
 import AdminSidebar from "@/app/admin/components/AdminSidebar";
 import { fetchFromAPI } from "@/lib/api";
 
-function renderInput(label, name, value, onChange, readOnly = false, type = "text") {
+// ---- Types ----
+type StoreDetails = {
+  city: string;
+  address: string;
+  latitude: string;
+  longitude: string;
+  manager_name: string;
+  manager_number: string;
+  alias: string;
+  password: string;
+};
+
+type TaskType = {
+  id: string;
+  name: string;
+  slot_type?: string;
+};
+
+type TaskCapacity = {
+  task_type_id: string;
+  capacity: number;
+};
+
+type GarageHubTag = {
+  hub_id: string;
+};
+
+type Store = {
+  id: string;
+  name: string;
+  type: "hub" | "garage";
+} & StoreDetails;
+
+// ---- Helper ----
+function renderInput(
+  label: string,
+  name: string,
+  value: string,
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void,
+  readOnly: boolean = false,
+  type: string = "text"
+) {
   return (
     <div>
       <Label className="block mb-1">{label}</Label>
@@ -25,9 +66,9 @@ export default function EditStorePage() {
   const storeId = params?.id as string;
   const router = useRouter();
 
-  const [storeType, setStoreType] = useState("hub");
+  const [storeType, setStoreType] = useState<"hub" | "garage">("hub");
   const [storeName, setStoreName] = useState("");
-  const [storeDetails, setStoreDetails] = useState({
+  const [storeDetails, setStoreDetails] = useState<StoreDetails>({
     city: "",
     address: "",
     latitude: "",
@@ -37,18 +78,19 @@ export default function EditStorePage() {
     alias: "",
     password: "",
   });
-  const [taskTypes, setTaskTypes] = useState([]);
-  const [taskCapacities, setTaskCapacities] = useState({});
-  const [hubOptions, setHubOptions] = useState([]);
-  const [selectedHubs, setSelectedHubs] = useState([]);
-  const [errorMessage, setErrorMessage] = useState(null);
+
+  const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
+  const [taskCapacities, setTaskCapacities] = useState<Record<string, number>>({});
+  const [hubOptions, setHubOptions] = useState<Store[]>([]);
+  const [selectedHubs, setSelectedHubs] = useState<string[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!storeId) return;
 
     const fetchData = async () => {
       try {
-        const store = await fetchFromAPI(`/api/stores/${storeId}`);
+        const store = (await fetchFromAPI(`/api/stores/${storeId}`)) as Store;
         if (!store) throw new Error("Store not found");
 
         setStoreType(store.type);
@@ -64,44 +106,59 @@ export default function EditStorePage() {
           password: store.password,
         });
 
-        const tasks = await fetchFromAPI(`/api/task-types?storeType=${store.type}`);
-        const normalizedTasks = tasks.map((t) => ({ ...t, id: t.id || t._id }));
+        const tasks = (await fetchFromAPI(`/api/task-types?storeType=${store.type}`)) as Partial<TaskType & { _id?: string }>[];
+        const normalizedTasks: TaskType[] = tasks.map((t) => ({
+          id: t.id ?? t._id ?? "",
+          name: t.name ?? "Unnamed Task",
+          slot_type: t.slot_type,
+        }));
         setTaskTypes(normalizedTasks);
 
-        const capacities = await fetchFromAPI(`/api/store-task-capacities/${storeId}`);
-        const capMap = {};
+        const capacities = (await fetchFromAPI(`/api/store-task-capacities/${storeId}`)) as TaskCapacity[];
+        const capMap: Record<string, number> = {};
         for (const cap of capacities) {
           capMap[cap.task_type_id] = cap.capacity;
         }
         setTaskCapacities(capMap);
 
         if (store.type === "garage") {
-          const hubs = await fetchFromAPI(`/api/stores?type=hub`);
+          const hubs = (await fetchFromAPI(`/api/stores?type=hub`)) as Store[];
           setHubOptions(hubs);
 
-          const tags = await fetchFromAPI(`/api/garage-hub-tags?garage_id=${storeId}`);
-          setSelectedHubs(tags.map((t) => t.hub_id));
+          const tags = (await fetchFromAPI(`/api/garage-hub-tags?garage_id=${storeId}`)) as GarageHubTag[];
+          setSelectedHubs(tags.map((tag) => tag.hub_id));
         }
       } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to load store data.";
         console.error("Failed to load store", err);
-        setErrorMessage(err.message);
+        setErrorMessage(message);
       }
     };
 
     fetchData();
   }, [storeId]);
 
-  const handleStoreNameChange = (e) => setStoreName(e.target.value);
-  const handleInputChange = (e) => {
+  const handleStoreNameChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setStoreName(e.target.value);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setStoreDetails((prev) => ({ ...prev, [name]: value }));
   };
-  const handleCapacityChange = (taskId, value) => {
-    setTaskCapacities((prev) => ({ ...prev, [taskId]: parseInt(value || "0", 10) }));
+
+  const handleCapacityChange = (taskId: string, value: string) => {
+    setTaskCapacities((prev) => ({
+      ...prev,
+      [taskId]: parseInt(value || "0", 10),
+    }));
   };
-  const handleHubToggle = (hubId) => {
+
+  const handleHubToggle = (hubId: string) => {
     setSelectedHubs((prev) =>
-      prev.includes(hubId) ? prev.filter((id) => id !== hubId) : [...prev, hubId]
+      prev.includes(hubId)
+        ? prev.filter((id) => id !== hubId)
+        : [...prev, hubId]
     );
   };
 
@@ -123,6 +180,7 @@ export default function EditStorePage() {
         task_type_id: t.id,
         capacity: taskCapacities[t.id] || 0,
       }));
+
       await fetchFromAPI("/api/store-task-capacities", {
         method: "PUT",
         body: JSON.stringify(taskPayload),
@@ -133,6 +191,7 @@ export default function EditStorePage() {
           garage_id: storeId,
           hub_ids: selectedHubs,
         };
+
         await fetchFromAPI("/api/garage-hub-tags", {
           method: "PUT",
           body: JSON.stringify(tagPayload),
@@ -141,8 +200,10 @@ export default function EditStorePage() {
 
       router.push("/admin/dashboard/manage-store");
     } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to update store.";
       console.error("Update failed", err);
-      setErrorMessage(err.message);
+      setErrorMessage(message);
     }
   };
 
@@ -185,7 +246,7 @@ export default function EditStorePage() {
                     <Label className="block mb-1">Type</Label>
                     <select
                       className="w-full border rounded p-2"
-                      onChange={(e) => setStoreType(e.target.value)}
+                      onChange={(e) => setStoreType(e.target.value as "hub" | "garage")}
                       value={storeType}
                     >
                       <option value="hub">Hub</option>

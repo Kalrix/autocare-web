@@ -17,18 +17,18 @@ interface Store {
 }
 
 export default function ManageStorePage() {
-  const [stores, setStores] = useState<Store[]>([]);
-  const [search, setSearch] = useState<string>("");
-  const [cityFilter, setCityFilter] = useState<string>("");
   const router = useRouter();
+  const [stores, setStores] = useState<Store[]>([]);
+  const [search, setSearch] = useState("");
+  const [cityFilter, setCityFilter] = useState("");
 
   useEffect(() => {
     const fetchStores = async () => {
       try {
-        const data = await fetchFromAPI("/api/stores");
-        setStores(data || []);
-      } catch (err) {
-        console.error("Error fetching stores:", err);
+        const data = await fetchFromAPI<Store[]>("/api/stores");
+        setStores(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error fetching stores:", error);
       }
     };
 
@@ -57,7 +57,9 @@ export default function ManageStorePage() {
       <div className="flex-1 p-4 bg-gray-50">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <h2 className="text-xl font-semibold text-gray-800">All Stores</h2>
-          <Button onClick={() => router.push("/admin/dashboard/manage-store/create")}>Create Store</Button>
+          <Button onClick={() => router.push("/admin/dashboard/manage-store/create")}>
+            Create Store
+          </Button>
         </div>
 
         <div className="mb-4 flex flex-col md:flex-row gap-4 max-w-2xl">

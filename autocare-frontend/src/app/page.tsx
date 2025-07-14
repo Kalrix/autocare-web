@@ -23,7 +23,7 @@ export default function HomePage() {
   const handleAdminLogin = async () => {
     setAdminError('');
     try {
-      const data = await fetchFromAPI('/api/admin-users/login', {
+      await fetchFromAPI('/api/admin-users/login', {
         method: 'POST',
         body: JSON.stringify({
           username: adminId,
@@ -33,7 +33,10 @@ export default function HomePage() {
 
       localStorage.setItem('user_type', 'admin');
       router.push('/admin/dashboard');
-    } catch (err: any) {
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error(error);
+      }
       setAdminError('Invalid admin ID or password');
     }
   };
@@ -43,7 +46,7 @@ export default function HomePage() {
     try {
       const alias = storeAlias.replace('Autocare24-', '').trim();
 
-      const data = await fetchFromAPI('/api/store-admin/login', {
+      const res = await fetchFromAPI<{ id: string; type: 'hub' | 'garage' }>('/api/store-admin/login', {
         method: 'POST',
         body: JSON.stringify({
           alias,
@@ -51,12 +54,15 @@ export default function HomePage() {
         }),
       });
 
-      localStorage.setItem('user_type', data.type); // hub or garage
-      localStorage.setItem('store_id', data.id);
+      localStorage.setItem('user_type', res.type);
+      localStorage.setItem('store_id', res.id);
 
-      const redirectPath = data.type === 'hub' ? '/store/dashboard' : '/garage/dashboard';
+      const redirectPath = res.type === 'hub' ? '/store/dashboard' : '/garage/dashboard';
       router.push(redirectPath);
-    } catch (err: any) {
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error(error);
+      }
       setStoreError('Invalid alias or password');
     }
   };
@@ -75,7 +81,6 @@ export default function HomePage() {
               <TabsTrigger value="store">Store Login</TabsTrigger>
             </TabsList>
 
-            {/* Admin Login */}
             <TabsContent value="admin">
               <div className="flex flex-col gap-4">
                 <Input
@@ -96,7 +101,6 @@ export default function HomePage() {
               </div>
             </TabsContent>
 
-            {/* Store Login */}
             <TabsContent value="store">
               <div className="flex flex-col gap-4">
                 <Input
