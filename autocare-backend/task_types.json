@@ -1,0 +1,74 @@
+[
+  {
+    "id": "0083bd95-3675-4d31-91ab-528c6b1b94bd",
+    "name": "Tyre & Wheel",
+    "allowed_in_hub": true,
+    "allowed_in_garage": false,
+    "slot_type": "per_hour",
+    "count": 5
+  },
+  {
+    "id": "100317a5-b22d-4a70-99f2-a3435a113c9b",
+    "name": "Cash Washing & Cleaning",
+    "allowed_in_hub": true,
+    "allowed_in_garage": false,
+    "slot_type": "per_hour",
+    "count": 8
+  },
+  {
+    "id": "62c0d483-72ed-47c2-9203-711488733904",
+    "name": "General Service",
+    "allowed_in_hub": true,
+    "allowed_in_garage": false,
+    "slot_type": "max_per_day",
+    "count": 5
+  },
+  {
+    "id": "6345ef20-072c-436f-9721-5c4f0966eeb1",
+    "name": "Repair",
+    "allowed_in_hub": true,
+    "allowed_in_garage": true,
+    "slot_type": "max_per_day",
+    "count": 3
+  },
+  {
+    "id": "99ab4f42-9415-4382-a7d3-c81a83276c22",
+    "name": "Spare Part Replacement",
+    "allowed_in_hub": true,
+    "allowed_in_garage": true,
+    "slot_type": "per_hour",
+    "count": 1
+  },
+  {
+    "id": "b04a531f-edfd-408e-9aef-b23f49347896",
+    "name": "Battery Replacement",
+    "allowed_in_hub": true,
+    "allowed_in_garage": false,
+    "slot_type": "per_hour",
+    "count": 3
+  },
+  {
+    "id": "b4db338c-8ce6-4a09-81dd-750425f18a6b",
+    "name": "Mechanical Work",
+    "allowed_in_hub": true,
+    "allowed_in_garage": true,
+    "slot_type": "max_per_day",
+    "count": 5
+  },
+  {
+    "id": "c31033e3-aa80-4152-ad21-fe7debac1aad",
+    "name": "Denting Painting",
+    "allowed_in_hub": false,
+    "allowed_in_garage": true,
+    "slot_type": "max_per_day",
+    "count": 2
+  },
+  {
+    "id": "da740c90-356b-42f7-a0fe-aafd9b8fcd77",
+    "name": "Inspection & Diagnostics",
+    "allowed_in_hub": true,
+    "allowed_in_garage": true,
+    "slot_type": "per_hour",
+    "count": 8
+  }
+]
