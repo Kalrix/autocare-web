@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import Link from 'next/link';
 import {
   Menu,
   X,
@@ -110,13 +109,27 @@ export default function AdminDashboard() {
   );
 }
 
-function NavItem({ icon, label, open, href, onClick, hasSub }) {
+function NavItem({
+  icon,
+  label,
+  open,
+  href,
+  onClick = () => {},
+  hasSub = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  open: boolean;
+  href?: string;
+  onClick?: () => void;
+  hasSub?: boolean;
+}) {
   const router = useRouter();
 
   const handleClick = () => {
     if (!open) return;
     if (href) router.push(href);
-    else onClick?.();
+    else onClick();
   };
 
   return (
@@ -131,7 +144,21 @@ function NavItem({ icon, label, open, href, onClick, hasSub }) {
   );
 }
 
-function Submenu({ icon, label, open, expanded, setExpanded, items }) {
+function Submenu({
+  icon,
+  label,
+  open,
+  expanded,
+  setExpanded,
+  items,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  open: boolean;
+  expanded: boolean;
+  setExpanded: (value: boolean) => void;
+  items: { label: string; path: string; disabled?: boolean }[];
+}) {
   const router = useRouter();
 
   return (
