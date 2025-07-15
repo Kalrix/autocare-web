@@ -27,13 +27,17 @@ export default function StoreCustomerListPage() {
 
   useEffect(() => {
     const fetchCustomers = async () => {
+      const storeId = localStorage.getItem('store_id');
+      if (!storeId) return;
+
       setLoading(true);
       try {
         const data = await fetchFromAPI<Customer[]>(
-          `/api/customers?page=${page}&limit=${limit}`
+          `/api/customers?store_id=${storeId}&page=${page}&limit=${limit}`
         );
-        // Only include active customers (default store customers)
-        setCustomers(Array.isArray(data) ? data.filter(c => c.is_active) : []);
+        setCustomers(
+          Array.isArray(data) ? data.filter((c) => c.is_active) : []
+        );
       } catch (error) {
         console.error('Failed to fetch customers:', error);
       } finally {
@@ -50,7 +54,9 @@ export default function StoreCustomerListPage() {
 
       <div className="flex-1 p-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">My Customers</h2>
+          <h2 className="text-xl font-semibold text-gray-800">
+            My Customers
+          </h2>
           <Button onClick={() => router.push('/store/customer/create')}>
             + Create Customer
           </Button>
@@ -82,7 +88,10 @@ export default function StoreCustomerListPage() {
                 </tr>
               ) : (
                 customers.map((customer) => (
-                  <tr key={customer.id} className="border-t hover:bg-gray-50">
+                  <tr
+                    key={customer.id}
+                    className="border-t hover:bg-gray-50 transition-colors"
+                  >
                     <td className="px-4 py-2">{customer.full_name}</td>
                     <td className="px-4 py-2">{customer.phone_number}</td>
                     <td className="px-4 py-2 hidden sm:table-cell">
@@ -110,11 +119,11 @@ export default function StoreCustomerListPage() {
         </Card>
 
         <div className="flex justify-between items-center mt-6">
-          <Button disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+          <Button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
             Previous
           </Button>
           <span className="text-sm text-gray-600">Page {page}</span>
-          <Button onClick={() => setPage(p => p + 1)}>Next</Button>
+          <Button onClick={() => setPage((p) => p + 1)}>Next</Button>
         </div>
       </div>
     </div>
