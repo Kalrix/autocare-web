@@ -10,7 +10,7 @@ from app.models.service import (
     ServiceInDB,
     ServicePricingCreate,
     ServicePricingUpdate,
-    ServicePricingInDB
+    ServicePricingInDB,
 )
 from app.db.mongo import db
 
@@ -31,7 +31,7 @@ async def create_service(data: ServiceCreate):
     service_dict["last_updated_at"] = datetime.utcnow()
 
     await service_collection.insert_one(service_dict)
-    return ServiceInDB(**service_dict)
+    return ServiceInDB(id=service_dict["_id"], **data.dict())
 
 
 @router.get("/services", response_model=List[ServiceInDB])
@@ -39,7 +39,10 @@ async def list_services(task_type_id: Optional[str] = Query(None)):
     query = {"task_type_id": task_type_id} if task_type_id else {}
     cursor = service_collection.find(query)
     services = await cursor.to_list(length=None)
-    return [ServiceInDB(**{**doc, "_id": str(doc["_id"])}) for doc in services]
+    return [
+        ServiceInDB(id=str(doc["_id"]), **{k: v for k, v in doc.items() if k != "_id"})
+        for doc in services
+    ]
 
 
 @router.get("/services/{service_id}", response_model=ServiceInDB)
@@ -47,7 +50,7 @@ async def get_service(service_id: str):
     doc = await service_collection.find_one({"_id": service_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Service not found")
-    return ServiceInDB(**{**doc, "_id": str(doc["_id"])})
+    return ServiceInDB(id=str(doc["_id"]), **{k: v for k, v in doc.items() if k != "_id"})
 
 
 @router.put("/services/{service_id}", response_model=ServiceInDB)
@@ -56,11 +59,13 @@ async def update_service(service_id: str, data: ServiceUpdate):
     update_data["last_updated_at"] = datetime.utcnow()
 
     result = await service_collection.find_one_and_update(
-        {"_id": service_id}, {"$set": update_data}, return_document=True
+        {"_id": service_id},
+        {"$set": update_data},
+        return_document=True,
     )
     if not result:
         raise HTTPException(status_code=404, detail="Service not found")
-    return ServiceInDB(**{**result, "_id": str(result["_id"])})
+    return ServiceInDB(id=str(result["_id"]), **{k: v for k, v in result.items() if k != "_id"})
 
 
 @router.delete("/services/{service_id}")
@@ -85,7 +90,7 @@ async def create_service_pricing(data: ServicePricingCreate):
     pricing_dict["created_at"] = datetime.utcnow()
 
     await service_pricing_collection.insert_one(pricing_dict)
-    return ServicePricingInDB(**pricing_dict)
+    return ServicePricingInDB(id=pricing_dict["_id"], **data.dict())
 
 
 @router.get("/service-pricing", response_model=List[ServicePricingInDB])
@@ -104,7 +109,10 @@ async def list_service_pricing(
 
     cursor = service_pricing_collection.find(query)
     pricing = await cursor.to_list(length=None)
-    return [ServicePricingInDB(**{**doc, "_id": str(doc["_id"])}) for doc in pricing]
+    return [
+        ServicePricingInDB(id=str(doc["_id"]), **{k: v for k, v in doc.items() if k != "_id"})
+        for doc in pricing
+    ]
 
 
 @router.get("/service-pricing/{pricing_id}", response_model=ServicePricingInDB)
@@ -112,7 +120,7 @@ async def get_service_pricing(pricing_id: str):
     doc = await service_pricing_collection.find_one({"_id": pricing_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Pricing not found")
-    return ServicePricingInDB(**{**doc, "_id": str(doc["_id"])})
+    return ServicePricingInDB(id=str(doc["_id"]), **{k: v for k, v in doc.items() if k != "_id"})
 
 
 @router.put("/service-pricing/{pricing_id}", response_model=ServicePricingInDB)
@@ -120,11 +128,13 @@ async def update_service_pricing(pricing_id: str, data: ServicePricingUpdate):
     update_data = jsonable_encoder(data, exclude_unset=True)
 
     result = await service_pricing_collection.find_one_and_update(
-        {"_id": pricing_id}, {"$set": update_data}, return_document=True
+        {"_id": pricing_id},
+        {"$set": update_data},
+        return_document=True,
     )
     if not result:
         raise HTTPException(status_code=404, detail="Pricing not found")
-    return ServicePricingInDB(**{**result, "_id": str(result["_id"])})
+    return ServicePricingInDB(id=str(result["_id"]), **{k: v for k, v in result.items() if k != "_id"})
 
 
 @router.delete("/service-pricing/{pricing_id}")

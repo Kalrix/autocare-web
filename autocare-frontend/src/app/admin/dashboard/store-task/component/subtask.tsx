@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { fetchFromAPI } from '@/lib/api';
 
 interface Addon {
   name: string;
@@ -58,35 +59,39 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
   const [showDialog, setShowDialog] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/services?task_type_id=${taskTypeId}`)
-      .then((res) => res.json())
-      .then(setServices)
+    fetchFromAPI<Service[]>(`/api/services?task_type_id=${taskTypeId}`)
+      .then((data) => setServices(data || []))
       .catch(console.error);
   }, [taskTypeId]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this service?')) return;
-    await fetch(`/api/services/${id}`, { method: 'DELETE' });
-    setServices((prev) => prev.filter((s) => s.id !== id));
+    try {
+      await fetchFromAPI(`/api/services/${id}`, { method: 'DELETE' });
+      setServices((prev) => prev.filter((s) => s.id !== id));
+    } catch (err) {
+      console.error('Delete failed:', err);
+    }
   };
 
   const handleSave = async (data: Partial<Service>) => {
     const method = selected ? 'PUT' : 'POST';
     const url = selected ? `/api/services/${selected.id}` : `/api/services`;
 
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...data, task_type_id: taskTypeId }),
-    });
+    try {
+      const updated = await fetchFromAPI<Service>(url, {
+        method,
+        body: JSON.stringify({ ...data, task_type_id: taskTypeId }),
+      });
 
-    const updated = await res.json();
-    setShowDialog(false);
-    setSelected(null);
-
-    setServices((prev) =>
-      selected ? prev.map((s) => (s.id === updated.id ? updated : s)) : [...prev, updated]
-    );
+      setShowDialog(false);
+      setSelected(null);
+      setServices((prev) =>
+        selected ? prev.map((s) => (s.id === updated.id ? updated : s)) : [...prev, updated]
+      );
+    } catch (err) {
+      console.error('Save failed:', err);
+    }
   };
 
   return (
