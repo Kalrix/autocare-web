@@ -16,8 +16,7 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ChangeEvent } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 
 interface Addon {
@@ -40,22 +39,12 @@ interface Service {
   description?: string;
   duration_minutes?: number;
   is_active: boolean;
+  is_visible_to_customer: boolean;
+  is_temporarily_unavailable: boolean;
+  available_from?: string;
+  available_to?: string;
   addons: Addon[];
   subservices: Subservice[];
-  icon_url?: string;
-  banner_url?: string;
-}
-
-interface ServicePricing {
-  id: string;
-  vehicle_category: string;
-  base_price: number;
-  labour_charge_type: 'fixed' | 'percentage';
-  labour_charge_value: number;
-  final_price: number;
-  tax_percent: number;
-  include_tax: boolean;
-  store_id?: string;
 }
 
 interface Props {
@@ -125,6 +114,8 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
               <TableHead>Name</TableHead>
               <TableHead>Duration</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Visibility</TableHead>
+              <TableHead>Unavailable</TableHead>
               <TableHead>Subservices</TableHead>
               <TableHead>Addons</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -136,6 +127,8 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
                 <TableCell>{service.name}</TableCell>
                 <TableCell>{service.duration_minutes} min</TableCell>
                 <TableCell>{service.is_active ? '✅' : '❌'}</TableCell>
+                <TableCell>{service.is_visible_to_customer ? 'Yes' : 'No'}</TableCell>
+                <TableCell>{service.is_temporarily_unavailable ? 'Yes' : 'No'}</TableCell>
                 <TableCell>{service.subservices.length}</TableCell>
                 <TableCell>{service.addons.length}</TableCell>
                 <TableCell className="text-right space-x-2">
@@ -177,13 +170,16 @@ function ServiceForm({
 }) {
   const [name, setName] = useState(service?.name || '');
   const [duration, setDuration] = useState(service?.duration_minutes || 30);
+  const [isActive, setIsActive] = useState(service?.is_active || false);
+  const [isVisible, setIsVisible] = useState(service?.is_visible_to_customer || true);
+  const [isUnavailable, setIsUnavailable] = useState(service?.is_temporarily_unavailable || false);
   const [addons, setAddons] = useState<Addon[]>(service?.addons || []);
   const [subservices, setSubservices] = useState<Subservice[]>(service?.subservices || []);
 
   const addAddon = () => setAddons([...addons, { name: '', price: 0 }]);
-  const updateAddon = (index: number, key: keyof Addon, value: any) => {
+  const updateAddon = (index: number, key: keyof Addon, value: string | number) => {
     const updated = [...addons];
-    updated[index][key] = value;
+    updated[index][key] = value as never;
     setAddons(updated);
   };
 
@@ -192,9 +188,9 @@ function ServiceForm({
       ...subservices,
       { name: '', price: 0, is_optional: true },
     ]);
-  const updateSub = (index: number, key: keyof Subservice, value: any) => {
+  const updateSub = (index: number, key: keyof Subservice, value: string | number | boolean) => {
     const updated = [...subservices];
-    updated[index][key] = value;
+    updated[index][key] = value as never;
     setSubservices(updated);
   };
 
@@ -202,21 +198,35 @@ function ServiceForm({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSave({ name, duration_minutes: duration, addons, subservices });
+        onSave({
+          name,
+          duration_minutes: duration,
+          is_active: isActive,
+          is_visible_to_customer: isVisible,
+          is_temporarily_unavailable: isUnavailable,
+          addons,
+          subservices,
+        });
       }}
       className="space-y-4"
     >
-      <div>
-        <label className="text-sm block mb-1">Service Name</label>
-        <Input value={name} onChange={(e) => setName(e.target.value)} required />
-      </div>
-      <div>
-        <label className="text-sm block mb-1">Duration (mins)</label>
-        <Input
-          type="number"
-          value={duration}
-          onChange={(e) => setDuration(parseInt(e.target.value))}
-        />
+      <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Service Name" required />
+      <Input
+        type="number"
+        value={duration}
+        onChange={(e) => setDuration(parseInt(e.target.value))}
+        placeholder="Duration (minutes)"
+      />
+      <div className="flex gap-4">
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} /> Active
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={isVisible} onChange={(e) => setIsVisible(e.target.checked)} /> Visible
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={isUnavailable} onChange={(e) => setIsUnavailable(e.target.checked)} /> Unavailable
+        </label>
       </div>
       <div>
         <label className="text-sm font-medium">Addons</label>
@@ -239,7 +249,6 @@ function ServiceForm({
           + Add Addon
         </Button>
       </div>
-
       <div>
         <label className="text-sm font-medium">Subservices</label>
         {subservices.map((sub, i) => (
@@ -261,7 +270,6 @@ function ServiceForm({
           + Add Subservice
         </Button>
       </div>
-
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onCancel}>
           Cancel
