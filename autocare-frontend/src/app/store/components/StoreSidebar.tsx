@@ -14,7 +14,7 @@ import {
   DollarSign,
 } from 'lucide-react';
 
-export default function AdminSidebar() {
+export default function StoreSidebar() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
@@ -33,43 +33,46 @@ export default function AdminSidebar() {
   ];
 
   return (
-    <div className="flex">
-      {/* Sidebar */}
-      <aside
-        className={`${
-          open ? 'w-64' : 'w-16'
-        } h-screen bg-white border-r transition-all duration-300 flex flex-col`}
-      >
-        <div className="flex items-center justify-between p-4 border-b">
-          {open && <h2 className="text-xl font-bold text-gray-800">AutoCare24</h2>}
-          <button onClick={() => setOpen(!open)} className="text-gray-600">
-            {open ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
+    <aside
+      className={`${
+        open ? 'w-64' : 'w-16'
+      } h-screen bg-white border-r transition-all duration-300 flex flex-col`}
+    >
+      {/* Header Section */}
+      <div className="flex items-center justify-between p-4 border-b">
+        {open && <h2 className="text-xl font-bold text-gray-800">AutoCare24</h2>}
+        <button
+          onClick={() => setOpen(!open)}
+          className="text-gray-600 p-2 rounded hover:bg-gray-100"
+        >
+          {open ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </div>
 
-        <nav className="flex-1 p-2 space-y-1">
-          {navItems.map((item) => (
-            <div
-              key={item.label}
-              onClick={() => router.push(item.path)}
-              className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer rounded"
-            >
-              {item.icon}
-              {open && <span className="text-sm font-medium">{item.label}</span>}
-            </div>
-          ))}
-        </nav>
-
-        <div className="p-2 border-t">
+      {/* Navigation Links */}
+      <nav className="flex-1 p-2 space-y-1">
+        {navItems.map((item) => (
           <div
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-100 cursor-pointer rounded"
+            key={item.label}
+            onClick={() => router.push(item.path)}
+            className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer rounded"
           >
-            <LogOut size={20} />
-            {open && <span className="text-sm font-medium">Logout</span>}
+            {item.icon}
+            {open && <span className="text-sm font-medium">{item.label}</span>}
           </div>
+        ))}
+      </nav>
+
+      {/* Logout */}
+      <div className="p-2 border-t">
+        <div
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-100 cursor-pointer rounded"
+        >
+          <LogOut size={20} />
+          {open && <span className="text-sm font-medium">Logout</span>}
         </div>
-      </aside>
-    </div>
+      </div>
+    </aside>
   );
 }

@@ -79,17 +79,18 @@ export default function AdminDashboard() {
           />
 
           <Submenu
-            icon={<Users size={20} />}
-            label="Users"
-            open={sidebarOpen}
-            expanded={userMenuOpen}
-            setExpanded={setUserMenuOpen}
-            items={[
-              { label: 'Customers', path: '/customers' },
-              { label: 'Vendors', path: '/vendors' },
-              { label: 'OEMs', path: '/oem' },
-            ]}
-          />
+  icon={<Users size={20} />}
+  label="Users"
+  open={sidebarOpen}
+  expanded={userMenuOpen}
+  setExpanded={setUserMenuOpen}
+  items={[
+    { label: 'Customers', path: '/admin/dashboard/customer' },
+    { label: 'Vendors', path: '/vendors' },
+    { label: 'OEMs', path: '/oem' },
+  ]}
+/>
+
 
           <NavItem
             icon={<Package size={20} />}
