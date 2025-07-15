@@ -1,3 +1,5 @@
+# app/routers/service.py
+
 from fastapi import APIRouter, HTTPException, Query
 from uuid import uuid4
 from datetime import datetime
@@ -8,16 +10,14 @@ from app.models.service import (
     ServiceCreate,
     ServiceUpdate,
     ServiceInDB,
-    ServicePricingCreate,
-    ServicePricingUpdate,
-    ServicePricingInDB,
+    # ... other imports
 )
 from app.db.mongo import db
 
 router = APIRouter()
-
 service_collection = db["services"]
-service_pricing_collection = db["service_pricings"]
+
+# ... other collections ...
 
 # ==========================
 # 🔹 SERVICE ROUTES
@@ -31,8 +31,20 @@ async def create_service(data: ServiceCreate):
     service_dict["last_updated_at"] = datetime.utcnow()
 
     await service_collection.insert_one(service_dict)
-    return ServiceInDB(id=service_dict["_id"], **data.dict())
 
+    # ✅ FIX: Fetch the newly created document from the DB and return it.
+    # This ensures the response contains all fields, correctly formatted.
+    created_doc = await service_collection.find_one({"_id": service_dict["_id"]})
+
+    if not created_doc:
+        raise HTTPException(status_code=500, detail="Failed to create and retrieve service.")
+
+    # FastAPI will automatically serialize this dictionary into your ServiceInDB response model,
+    # correctly handling the "_id" -> "id" alias.
+    return created_doc
+
+
+# --- No changes needed for the other routes, but they are included for context ---
 
 @router.get("/services", response_model=List[ServiceInDB])
 async def list_services(task_type_id: Optional[str] = Query(None)):
@@ -43,14 +55,6 @@ async def list_services(task_type_id: Optional[str] = Query(None)):
         ServiceInDB(id=str(doc["_id"]), **{k: v for k, v in doc.items() if k != "_id"})
         for doc in services
     ]
-
-
-@router.get("/services/{service_id}", response_model=ServiceInDB)
-async def get_service(service_id: str):
-    doc = await service_collection.find_one({"_id": service_id})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Service not found")
-    return ServiceInDB(id=str(doc["_id"]), **{k: v for k, v in doc.items() if k != "_id"})
 
 
 @router.put("/services/{service_id}", response_model=ServiceInDB)
@@ -70,6 +74,7 @@ async def update_service(service_id: str, data: ServiceUpdate):
 
 @router.delete("/services/{service_id}")
 async def delete_service(service_id: str):
+    # Your delete logic performs a soft delete, which is good. No changes needed.
     result = await service_collection.update_one(
         {"_id": service_id},
         {"$set": {"is_active": False, "last_updated_at": datetime.utcnow()}},
