@@ -60,7 +60,8 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
   useEffect(() => {
     fetch(`/api/services?task_type_id=${taskTypeId}`)
       .then((res) => res.json())
-      .then(setServices);
+      .then(setServices)
+      .catch(console.error);
   }, [taskTypeId]);
 
   const handleDelete = async (id: string) => {
@@ -168,11 +169,11 @@ function ServiceForm({
   onSave: (data: Partial<Service>) => void;
   onCancel: () => void;
 }) {
-  const [name, setName] = useState(service?.name || '');
-  const [duration, setDuration] = useState(service?.duration_minutes || 30);
-  const [isActive, setIsActive] = useState(service?.is_active || false);
-  const [isVisible, setIsVisible] = useState(service?.is_visible_to_customer || true);
-  const [isUnavailable, setIsUnavailable] = useState(service?.is_temporarily_unavailable || false);
+  const [name, setName] = useState<string>(service?.name || '');
+  const [duration, setDuration] = useState<number>(service?.duration_minutes || 30);
+  const [isActive, setIsActive] = useState<boolean>(service?.is_active || false);
+  const [isVisible, setIsVisible] = useState<boolean>(service?.is_visible_to_customer || true);
+  const [isUnavailable, setIsUnavailable] = useState<boolean>(service?.is_temporarily_unavailable || false);
   const [addons, setAddons] = useState<Addon[]>(service?.addons || []);
   const [subservices, setSubservices] = useState<Subservice[]>(service?.subservices || []);
 
@@ -184,10 +185,8 @@ function ServiceForm({
   };
 
   const addSubservice = () =>
-    setSubservices([
-      ...subservices,
-      { name: '', price: 0, is_optional: true },
-    ]);
+    setSubservices([...subservices, { name: '', price: 0, is_optional: true }]);
+
   const updateSub = (index: number, key: keyof Subservice, value: string | number | boolean) => {
     const updated = [...subservices];
     updated[index][key] = value as never;
@@ -210,7 +209,12 @@ function ServiceForm({
       }}
       className="space-y-4"
     >
-      <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Service Name" required />
+      <Input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Service Name"
+        required
+      />
       <Input
         type="number"
         value={duration}
@@ -219,13 +223,28 @@ function ServiceForm({
       />
       <div className="flex gap-4">
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} /> Active
+          <input
+            type="checkbox"
+            checked={isActive}
+            onChange={(e) => setIsActive(e.target.checked)}
+          />{' '}
+          Active
         </label>
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={isVisible} onChange={(e) => setIsVisible(e.target.checked)} /> Visible
+          <input
+            type="checkbox"
+            checked={isVisible}
+            onChange={(e) => setIsVisible(e.target.checked)}
+          />{' '}
+          Visible
         </label>
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={isUnavailable} onChange={(e) => setIsUnavailable(e.target.checked)} /> Unavailable
+          <input
+            type="checkbox"
+            checked={isUnavailable}
+            onChange={(e) => setIsUnavailable(e.target.checked)}
+          />{' '}
+          Unavailable
         </label>
       </div>
       <div>
