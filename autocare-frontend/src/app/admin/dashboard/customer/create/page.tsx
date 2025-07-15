@@ -5,15 +5,24 @@ import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import AdminSidebar from '@/app/admin/components/AdminSidebar';
 import { fetchFromAPI } from '@/lib/api';
 
 export default function CreateCustomer() {
   const router = useRouter();
+
   const [formData, setFormData] = useState({
     full_name: '',
     phone_number: '',
     email: '',
     source: 'main_admin',
+    address: {
+      line1: '',
+      city: '',
+      pincode: '',
+    },
+    latitude: '',
+    longitude: '',
   });
 
   const handleSubmit = async () => {
@@ -29,52 +38,118 @@ export default function CreateCustomer() {
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <h2 className="text-2xl font-semibold mb-4">Create Customer</h2>
+    <div className="flex min-h-screen">
+      <AdminSidebar />
 
-      <div className="space-y-4">
-        <div>
-          <Label>Full Name</Label>
-          <Input
-            placeholder="John Doe"
-            value={formData.full_name}
-            onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-          />
+      <div className="flex-1 p-6 bg-gray-50">
+        <div className="max-w-3xl mx-auto bg-white shadow-md rounded p-6">
+          <h2 className="text-2xl font-semibold mb-6">Create Customer</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Full Name</Label>
+              <Input
+                placeholder="John Doe"
+                value={formData.full_name}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <Label>Phone Number</Label>
+<Input
+  type="tel"
+  placeholder="9876543210"
+  value={formData.phone_number}
+  maxLength={10}
+  onChange={(e) => {
+    const value = e.target.value.replace(/\D/g, ''); // remove non-digit characters
+    if (value.length <= 10) {
+      setFormData({ ...formData, phone_number: value });
+    }
+  }}
+/>
+            </div>
+
+            <div>
+              <Label>Email</Label>
+              <Input
+                placeholder="john@example.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <Label>Source</Label>
+              <select
+                value={formData.source}
+                onChange={(e) => setFormData({ ...formData, source: e.target.value as any })}
+                className="w-full px-3 py-2 border rounded"
+              >
+                <option value="main_admin">Main Admin</option>
+                <option value="hub_admin">Hub Admin</option>
+                <option value="garage_admin">Garage Admin</option>
+                <option value="website">Website</option>
+              </select>
+            </div>
+
+            <div className="col-span-2">
+              <Label>Address Line 1</Label>
+              <Input
+                placeholder="Street, Area"
+                value={formData.address.line1}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: { ...formData.address, line1: e.target.value } })
+                }
+              />
+            </div>
+
+            <div>
+              <Label>City</Label>
+              <Input
+                placeholder="City"
+                value={formData.address.city}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: { ...formData.address, city: e.target.value } })
+                }
+              />
+            </div>
+
+            <div>
+              <Label>Pincode</Label>
+              <Input
+                placeholder="123456"
+                value={formData.address.pincode}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: { ...formData.address, pincode: e.target.value } })
+                }
+              />
+            </div>
+
+            <div>
+              <Label>Latitude</Label>
+              <Input
+                placeholder="e.g. 23.45678"
+                value={formData.latitude}
+                onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <Label>Longitude</Label>
+              <Input
+                placeholder="e.g. 77.12345"
+                value={formData.longitude}
+                onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <Button onClick={handleSubmit}>Create Customer</Button>
+          </div>
         </div>
-
-        <div>
-          <Label>Phone Number</Label>
-          <Input
-            placeholder="9876543210"
-            value={formData.phone_number}
-            onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-          />
-        </div>
-
-        <div>
-          <Label>Email (optional)</Label>
-          <Input
-            placeholder="john@example.com"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          />
-        </div>
-
-        <div>
-          <Label>Source</Label>
-          <select
-            value={formData.source}
-            onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-            className="w-full px-3 py-2 border rounded"
-          >
-            <option value="main_admin">Main Admin</option>
-            <option value="hub_admin">Hub Admin</option>
-            <option value="garage_admin">Garage Admin</option>
-            <option value="website">Website</option>
-          </select>
-        </div>
-
-        <Button onClick={handleSubmit}>Create</Button>
       </div>
     </div>
   );
