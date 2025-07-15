@@ -61,10 +61,10 @@ export default function CustomerPage() {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar />
 
-      <div className="flex-1 p-4 bg-gray-50">
+      <div className="flex-1 p-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-800">Customers</h2>
           <Button onClick={() => router.push('/admin/dashboard/customer/create')}>
@@ -72,7 +72,7 @@ export default function CustomerPage() {
           </Button>
         </div>
 
-        <Card className="overflow-x-auto">
+        <Card className="overflow-x-auto shadow-md">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-100 text-left">
               <tr>
@@ -126,7 +126,7 @@ export default function CustomerPage() {
                           size="icon"
                           variant="outline"
                           onClick={() =>
-                            router.push(`/admin/dashboard/customer/id/${customer.id}`)
+                            router.push(`/admin/dashboard/customer/edit/${customer.id}`)
                           }
                         >
                           <Pencil size={16} />
@@ -147,8 +147,7 @@ export default function CustomerPage() {
           </table>
         </Card>
 
-        {/* Pagination Controls */}
-        <div className="flex justify-between items-center mt-4">
+        <div className="flex justify-between items-center mt-6">
           <Button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
             Previous
           </Button>
