@@ -5,26 +5,40 @@ import AdminSidebar from '@/app/admin/components/AdminSidebar';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TaskTab from './component/task';
-import SubtaskTab from './component/subtask';
+import Subtask from './component/subtask';
+import { fetchFromAPI } from '@/lib/api';
 
 interface TaskType {
-  id: string;
+  _id: string;
   name: string;
   allowed_in_hub: boolean;
   allowed_in_garage: boolean;
-  created_at: string;
+  slot_type: 'per_hour' | 'max_per_day';
+  count: number;
 }
 
 export default function StoreTaskPage() {
   const [activeTab, setActiveTab] = useState('task');
   const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchTaskTypes = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchFromAPI<TaskType[]>('/api/task-types');
+      setTaskTypes(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Failed to fetch task types', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetch('/api/task-types')
-      .then((res) => res.json())
-      .then(setTaskTypes)
-      .catch((err) => console.error('Failed to load task types', err));
-  }, []);
+    if (activeTab === 'subtask') {
+      fetchTaskTypes();
+    }
+  }, [activeTab]);
 
   return (
     <div className="flex min-h-screen">
@@ -45,19 +59,17 @@ export default function StoreTaskPage() {
             </TabsContent>
 
             <TabsContent value="subtask">
-              <div className="space-y-6">
-                {taskTypes.length === 0 ? (
-                  <p className="text-gray-500">No task types found.</p>
-                ) : (
-                  taskTypes.map((task) => (
-                    <SubtaskTab
-                      key={task.id}
-                      taskTypeId={task.id}
-                      taskTypeName={task.name}
-                    />
-                  ))
-                )}
-              </div>
+              {loading ? (
+                <p className="text-gray-500">Loading task types...</p>
+              ) : taskTypes.length === 0 ? (
+                <p className="text-gray-500">No task types found.</p>
+              ) : (
+                taskTypes.map((task) => (
+                  <div key={task._id} className="mb-8">
+                    <Subtask taskTypeId={task._id} taskTypeName={task.name} />
+                  </div>
+                ))
+              )}
             </TabsContent>
           </Tabs>
         </Card>
