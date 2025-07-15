@@ -1,14 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AdminSidebar from '@/app/admin/components/AdminSidebar';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TaskTab from './component/task';
 import SubtaskTab from './component/subtask';
 
+interface TaskType {
+  id: string;
+  name: string;
+  allowed_in_hub: boolean;
+  allowed_in_garage: boolean;
+  created_at: string;
+}
+
 export default function StoreTaskPage() {
   const [activeTab, setActiveTab] = useState('task');
+  const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
+
+  useEffect(() => {
+    fetch('/api/task-types')
+      .then((res) => res.json())
+      .then(setTaskTypes)
+      .catch((err) => console.error('Failed to load task types', err));
+  }, []);
 
   return (
     <div className="flex min-h-screen">
@@ -29,7 +45,19 @@ export default function StoreTaskPage() {
             </TabsContent>
 
             <TabsContent value="subtask">
-              <SubtaskTab />
+              <div className="space-y-6">
+                {taskTypes.length === 0 ? (
+                  <p className="text-gray-500">No task types found.</p>
+                ) : (
+                  taskTypes.map((task) => (
+                    <SubtaskTab
+                      key={task.id}
+                      taskTypeId={task.id}
+                      taskTypeName={task.name}
+                    />
+                  ))
+                )}
+              </div>
             </TabsContent>
           </Tabs>
         </Card>
