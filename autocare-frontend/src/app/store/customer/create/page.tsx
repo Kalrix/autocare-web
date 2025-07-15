@@ -68,6 +68,7 @@ export default function CreateCustomerPage() {
       setLoading(true);
       await fetchFromAPI('/api/customers', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       router.push('/store/customers');
@@ -158,7 +159,11 @@ export default function CreateCustomerPage() {
             </div>
           </div>
 
-          <Button onClick={handleSubmit} disabled={loading} className="w-full sm:w-auto">
+          <Button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="w-full sm:w-auto"
+          >
             {loading ? 'Creating...' : 'Create Customer'}
           </Button>
         </Card>
