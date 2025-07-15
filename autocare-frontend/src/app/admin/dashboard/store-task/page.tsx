@@ -4,8 +4,8 @@ import { useState } from 'react';
 import AdminSidebar from '@/app/admin/components/AdminSidebar';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import TaskTab from './components/task';
-import SubtaskTab from './components/subtask';
+import TaskTab from './component/task';
+import SubtaskTab from './component/subtask';
 
 export default function StoreTaskPage() {
   const [activeTab, setActiveTab] = useState('task');
