@@ -25,7 +25,6 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { fetchFromAPI } from '@/lib/api';
 
-// Interfaces (duration_minutes is now optional on the frontend)
 interface Addon {
   name: string;
   price: number;
@@ -37,14 +36,14 @@ interface Subservice {
   is_optional: boolean;
   description?: string;
   vehicle_category?: string;
-  duration_minutes?: number; // Kept in interface for data consistency
+  duration_minutes?: number;
 }
 
 interface Service {
   id: string;
   name: string;
   description?: string;
-  duration_minutes?: number; // No longer edited in the form
+  duration_minutes?: number;
   is_active: boolean;
   is_visible_to_customer: boolean;
   is_temporarily_unavailable: boolean;
@@ -62,22 +61,17 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const refetchServices = () => {
+  useEffect(() => {
     fetchFromAPI<Service[]>(`/api/services?task_type_id=${taskTypeId}`)
       .then((data) => setServices(data || []))
       .catch(console.error);
-  };
-
-  useEffect(() => {
-    refetchServices();
   }, [taskTypeId]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to deactivate this service?')) return;
     try {
-      // Your backend now performs a soft delete
       await fetchFromAPI(`/api/services/${id}`, { method: 'DELETE' });
-      refetchServices();
+      setServices((prev) => prev.filter((s) => s.id !== id));
     } catch (err) {
       console.error('Deactivation failed:', err);
     }
@@ -89,12 +83,17 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
     const url = isEditing ? `/api/services/${selectedService.id}` : `/api/services`;
 
     try {
-      await fetchFromAPI<Service>(url, {
+      const updated = await fetchFromAPI<Service>(url, {
         method,
         body: JSON.stringify({ ...data, task_type_id: taskTypeId }),
       });
-      refetchServices();
       setIsDialogOpen(false);
+      setSelectedService(null);
+      setServices((prev) =>
+        isEditing
+          ? prev.map((s) => (s.id === updated.id ? updated : s))
+          : [...prev, updated]
+      );
     } catch (err) {
       console.error('Save failed:', err);
     }
@@ -104,14 +103,11 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Services for {taskTypeName}</CardTitle>
-        <Button
-          onClick={() => {
-            setSelectedService(null);
-            setIsDialogOpen(true);
-          }}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Service
+        <Button onClick={() => {
+          setSelectedService(null);
+          setIsDialogOpen(true);
+        }}>
+          <Plus className="w-4 h-4 mr-2" /> Add Service
         </Button>
       </CardHeader>
       <CardContent>
@@ -184,7 +180,7 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
           <DialogHeader>
             <DialogTitle>{selectedService ? 'Edit Service' : 'Add New Service'}</DialogTitle>
             <DialogDescription>
-              Fill in the details for the service. Click save when you're done.
+              Fill in the details for the service. Click save when you&apos;re done.
             </DialogDescription>
           </DialogHeader>
           <ServiceForm
@@ -198,7 +194,7 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
   );
 }
 
-// --- Service Form Component ---
+// --- Service Form ---
 function ServiceForm({
   service,
   onSave,
@@ -241,109 +237,22 @@ function ServiceForm({
       </div>
 
       <div className="flex items-center space-x-6">
-        <div className="flex items-center space-x-2">
-          <Checkbox id="isActive" checked={isActive} onCheckedChange={(c) => setIsActive(!!c)} />
-          <Label htmlFor="isActive">Active</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox id="isVisible" checked={isVisible} onCheckedChange={(c) => setIsVisible(!!c)} />
-          <Label htmlFor="isVisible">Visible to Customer</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox id="isUnavailable" checked={isUnavailable} onCheckedChange={(c) => setIsUnavailable(!!c)} />
-          <Label htmlFor="isUnavailable">Temporarily Unavailable</Label>
-        </div>
-      </div>
-      
-      {/* 🎨 UI CHANGE: Subservices are now first */}
-      <div className="space-y-3 rounded-md border p-4">
-        <h3 className="text-sm font-medium">Subservices (Optional Parts/Tasks)</h3>
-        {subservices.map((sub, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <Input
-              placeholder="Subservice Name"
-              value={sub.name}
-              onChange={(e) => {
-                const updated = [...subservices];
-                updated[i].name = e.target.value;
-                setSubservices(updated);
-              }}
-            />
-            <Input
-              type="number"
-              placeholder="Price"
-              value={sub.price}
-              onChange={(e) => {
-                const updated = [...subservices];
-                updated[i].price = parseFloat(e.target.value) || 0;
-                setSubservices(updated);
-              }}
-              className="w-28"
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => setSubservices(subservices.filter((_, idx) => i !== idx))}
-            >
-              <Trash2 className="w-4 h-4 text-destructive" />
-            </Button>
-          </div>
-        ))}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setSubservices([...subservices, { name: '', price: 0, is_optional: true }])}
-        >
-          <Plus className="w-4 h-4 mr-2" /> Add Subservice
-        </Button>
+        <CheckboxRow label="Active" checked={isActive} onChange={setIsActive} id="isActive" />
+        <CheckboxRow label="Visible to Customer" checked={isVisible} onChange={setIsVisible} id="isVisible" />
+        <CheckboxRow label="Temporarily Unavailable" checked={isUnavailable} onChange={setIsUnavailable} id="isUnavailable" />
       </div>
 
-      {/* 🎨 UI CHANGE: Addons are now second */}
-      <div className="space-y-3 rounded-md border p-4">
-        <h3 className="text-sm font-medium">Addons (Optional Products)</h3>
-        {addons.map((addon, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <Input
-              placeholder="Addon Name"
-              value={addon.name}
-              onChange={(e) => {
-                const updated = [...addons];
-                updated[i].name = e.target.value;
-                setAddons(updated);
-              }}
-            />
-            <Input
-              type="number"
-              placeholder="Price"
-              value={addon.price}
-              onChange={(e) => {
-                const updated = [...addons];
-                updated[i].price = parseFloat(e.target.value) || 0;
-                setAddons(updated);
-              }}
-              className="w-28"
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => setAddons(addons.filter((_, idx) => i !== idx))}
-            >
-              <Trash2 className="w-4 h-4 text-destructive" />
-            </Button>
-          </div>
-        ))}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setAddons([...addons, { name: '', price: 0 }])}
-        >
-          <Plus className="w-4 h-4 mr-2" /> Add Addon
-        </Button>
-      </div>
+      <ServiceListSection
+        title="Subservices (Optional Parts/Tasks)"
+        items={subservices}
+        setItems={setSubservices}
+        isSubservice
+      />
+      <ServiceListSection
+        title="Addons (Optional Products)"
+        items={addons}
+        setItems={setAddons}
+      />
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="ghost" onClick={onCancel}>
@@ -352,5 +261,86 @@ function ServiceForm({
         <Button type="submit">Save Changes</Button>
       </div>
     </form>
+  );
+}
+
+// Reusable Checkbox row
+function CheckboxRow({
+  label,
+  checked,
+  onChange,
+  id,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+  id: string;
+}) {
+  return (
+    <div className="flex items-center space-x-2">
+      <Checkbox id={id} checked={checked} onCheckedChange={(v) => onChange(!!v)} />
+      <Label htmlFor={id}>{label}</Label>
+    </div>
+  );
+}
+
+// List section for Addons/Subservices
+function ServiceListSection({
+  title,
+  items,
+  setItems,
+  isSubservice = false,
+}: {
+  title: string;
+  items: (Addon | Subservice)[];
+  setItems: (items: any[]) => void;
+  isSubservice?: boolean;
+}) {
+  return (
+    <div className="space-y-3 rounded-md border p-4">
+      <h3 className="text-sm font-medium">{title}</h3>
+      {items.map((item, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <Input
+            placeholder={isSubservice ? 'Subservice Name' : 'Addon Name'}
+            value={item.name}
+            onChange={(e) => {
+              const updated = [...items];
+              updated[i].name = e.target.value;
+              setItems(updated);
+            }}
+          />
+          <Input
+            type="number"
+            placeholder="Price"
+            value={item.price}
+            onChange={(e) => {
+              const updated = [...items];
+              updated[i].price = parseFloat(e.target.value) || 0;
+              setItems(updated);
+            }}
+            className="w-28"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setItems(items.filter((_, idx) => idx !== i))}
+          >
+            <Trash2 className="w-4 h-4 text-destructive" />
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() =>
+          setItems([...items, isSubservice ? { name: '', price: 0, is_optional: true } : { name: '', price: 0 }])
+        }
+      >
+        <Plus className="w-4 h-4 mr-2" /> Add {isSubservice ? 'Subservice' : 'Addon'}
+      </Button>
+    </div>
   );
 }
