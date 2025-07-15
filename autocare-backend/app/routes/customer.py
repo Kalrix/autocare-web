@@ -45,25 +45,38 @@ async def create_customer(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-# 📋 List customers (optionally filtered by store or onboarded_by)
+# 📋 List active customers filtered by store or onboarded_by
 @router.get("/customers")
 async def list_customers(
     store_id: Optional[str] = Query(None),
     onboarded_by: Optional[str] = Query(None)
 ):
-    query = {}
-    if store_id:
-        query["store_id"] = store_id
-    if onboarded_by:
-        query["onboarded_by"] = onboarded_by
-
     try:
-        cursor = customer_collection.find(query)
+        base_query = {"is_active": True}
+
+        if store_id and onboarded_by:
+            base_query["$or"] = [
+                {"store_id": store_id},
+                {"onboarded_by": onboarded_by}
+            ]
+        elif store_id:
+            base_query["$or"] = [
+                {"store_id": store_id},
+                {"onboarded_by": store_id}
+            ]
+        elif onboarded_by:
+            base_query["$or"] = [
+                {"store_id": onboarded_by},
+                {"onboarded_by": onboarded_by}
+            ]
+
+        cursor = customer_collection.find(base_query)
         customers = []
         async for doc in cursor:
             doc["id"] = doc.get("id") or str(doc["_id"])
             doc.pop("_id", None)
             customers.append(doc)
+
         return customers
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch customers: {str(e)}")
