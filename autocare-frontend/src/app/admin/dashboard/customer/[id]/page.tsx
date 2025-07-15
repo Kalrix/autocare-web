@@ -47,7 +47,7 @@ export default function EditCustomerPage() {
   const [loading, setLoading] = useState(false);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [loyaltyCard, setLoyaltyCard] = useState<LoyaltyCard | null>(null);
+  const [loyaltyCard, setLoyaltyCard] = useState<LoyaltyCard | null | 'not_found'>(null);
 
   useEffect(() => {
     if (id) fetchDetails(id as string);
@@ -55,14 +55,26 @@ export default function EditCustomerPage() {
 
   const fetchDetails = async (customerId: string) => {
     try {
-      const [cust, vehs, card] = await Promise.all([
+      const [cust, vehs] = await Promise.all([
         fetchFromAPI<Customer>(`/api/customers/${customerId}`),
-        fetchFromAPI<Vehicle[]>(`/api/customers/${customerId}/vehicles`),
-        fetchFromAPI<LoyaltyCard | null>(`/api/customers/${customerId}/loyalty-card`)
+        fetchFromAPI<Vehicle[]>(`/api/customers/${customerId}/vehicles`)
       ]);
       setCustomer(cust);
       setVehicles(vehs);
-      setLoyaltyCard(card);
+
+      // loyalty card call separately so 404 doesn't break everything
+      try {
+        const card = await fetchFromAPI<LoyaltyCard>(
+          `/api/customers/${customerId}/loyalty-card`
+        );
+        setLoyaltyCard(card);
+      } catch (err: any) {
+        if (err?.message?.includes('404')) {
+          setLoyaltyCard('not_found');
+        } else {
+          console.error('Loyalty card fetch error:', err);
+        }
+      }
     } catch (error) {
       console.error('Error loading customer data:', error);
     }
@@ -102,7 +114,9 @@ export default function EditCustomerPage() {
               <Label>Full Name</Label>
               <Input
                 value={customer.full_name}
-                onChange={(e) => setCustomer({ ...customer, full_name: e.target.value })}
+                onChange={(e) =>
+                  setCustomer({ ...customer, full_name: e.target.value })
+                }
               />
             </div>
 
@@ -219,7 +233,7 @@ export default function EditCustomerPage() {
         </TabsContent>
 
         <TabsContent value="loyalty">
-          {!loyaltyCard ? (
+          {loyaltyCard === null || loyaltyCard === 'not_found' ? (
             <p className="text-sm text-gray-500">No loyalty card assigned.</p>
           ) : (
             <Card>
