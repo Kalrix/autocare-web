@@ -8,8 +8,8 @@ class Address(BaseModel):
     city: Optional[str] = None
     pincode: Optional[str] = None
 
-class Customer(BaseModel):
-    id: UUID = Field(default_factory=UUID, alias="_id")
+# ✅ Schema used when creating customer (from frontend)
+class CustomerCreate(BaseModel):
     full_name: str
     phone_number: str
     email: Optional[EmailStr] = None
@@ -21,10 +21,10 @@ class Customer(BaseModel):
     store_id: Optional[UUID] = None
     onboarded_by: Optional[UUID] = None
     loyalty_card_id: Optional[UUID] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
-    is_active: bool = True
 
-    class Config:
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
+# ✅ Full schema (for DB reading, internal use, etc.)
+class Customer(CustomerCreate):
+    id: UUID
+    created_at: datetime
+    updated_at: datetime
+    is_active: bool = True

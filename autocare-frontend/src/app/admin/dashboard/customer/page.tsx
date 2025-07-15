@@ -126,7 +126,7 @@ export default function CustomerPage() {
                           size="icon"
                           variant="outline"
                           onClick={() =>
-                            router.push(`/admin/dashboard/customer/edit/${customer.id}`)
+                            router.push(`/admin/dashboard/customer/id/${customer.id}`)
                           }
                         >
                           <Pencil size={16} />
