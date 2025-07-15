@@ -72,7 +72,7 @@ export default function StoreTaskPage() {
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Manage Task Types</h2>
 
         {/* Task Type Form */}
-        <Card className="mb-6 p-4 space-y-4 max-w-2xl">
+        <Card className="mb-6 p-4 space-y-4 max-w-3xl">
           <h3 className="text-lg font-semibold text-gray-700">Add New Task Type</h3>
 
           <div className="space-y-2">
@@ -143,19 +143,31 @@ export default function StoreTaskPage() {
           </Button>
         </Card>
 
-        {/* Existing Task Types */}
-        <section className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {taskTypes.map((task) => (
-            <Card key={task._id} className="p-4 bg-white border rounded-md shadow-sm">
-              <h4 className="text-md font-semibold text-gray-900">{task.name}</h4>
-              <p className="text-sm text-gray-600">Slot: {task.slot_type}</p>
-              <p className="text-sm text-gray-600">Count: {task.count}</p>
-              <p className="text-xs text-gray-500 mt-2">
-                {task.allowed_in_hub && '✅ Hub '}
-                {task.allowed_in_garage && '✅ Garage'}
-              </p>
-            </Card>
-          ))}
+        {/* Task Types Table */}
+        <section className="bg-white border rounded-md shadow overflow-x-auto">
+          <table className="min-w-full text-sm text-gray-700">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-4 py-2 text-left">Task Name</th>
+                <th className="px-4 py-2 text-left">Slot Type</th>
+                <th className="px-4 py-2 text-left">Count</th>
+                <th className="px-4 py-2 text-left">Allowed In</th>
+              </tr>
+            </thead>
+            <tbody>
+              {taskTypes.map((task) => (
+                <tr key={task._id} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-2 font-medium">{task.name}</td>
+                  <td className="px-4 py-2 capitalize">{task.slot_type}</td>
+                  <td className="px-4 py-2">{task.count}</td>
+                  <td className="px-4 py-2 text-xs text-gray-600">
+                    {task.allowed_in_hub && '✅ Hub '}
+                    {task.allowed_in_garage && '✅ Garage'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </section>
       </div>
     </div>
