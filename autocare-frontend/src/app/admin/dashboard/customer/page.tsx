@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { fetchFromAPI } from '@/lib/api';
 import AdminSidebar from '@/app/admin/components/AdminSidebar';
-import { Pencil, Trash, Eye } from 'lucide-react';
+import { Pencil, Trash } from 'lucide-react';
 
 interface Address {
   line1?: string;
@@ -117,16 +117,7 @@ export default function CustomerPage() {
                           size="icon"
                           variant="outline"
                           onClick={() =>
-                            router.push(`/admin/dashboard/customer/view/${customer.id}`)
-                          }
-                        >
-                          <Eye size={16} />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          onClick={() =>
-                            router.push(`/admin/dashboard/customer/edit/${customer.id}`)
+                            router.push(`/admin/dashboard/customer/${customer.id}`)
                           }
                         >
                           <Pencil size={16} />
