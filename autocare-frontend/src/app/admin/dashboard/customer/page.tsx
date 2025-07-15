@@ -28,24 +28,25 @@ interface Customer {
 export default function CustomerPage() {
   const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const limit = 10;
 
-  const fetchCustomers = async () => {
-    try {
-      const data = await fetchFromAPI<Customer[]>(
-        `/api/customers?page=${page}&limit=${limit}`
-      );
-      setCustomers(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Failed to fetch customers:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchCustomers = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchFromAPI<Customer[]>(
+          `/api/customers?page=${page}&limit=${limit}`
+        );
+        setCustomers(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Failed to fetch customers:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchCustomers();
   }, [page]);
 
@@ -53,7 +54,7 @@ export default function CustomerPage() {
     if (!confirm('Are you sure you want to delete this customer?')) return;
     try {
       await fetchFromAPI(`/api/customers/${id}`, { method: 'DELETE' });
-      fetchCustomers();
+      setCustomers((prev) => prev.filter((cust) => cust._id !== id));
     } catch (error) {
       console.error('Failed to delete customer:', error);
     }
@@ -80,44 +81,64 @@ export default function CustomerPage() {
                 <th className="px-4 py-2 hidden sm:table-cell">Email</th>
                 <th className="px-4 py-2 hidden md:table-cell">City</th>
                 <th className="px-4 py-2 hidden lg:table-cell">Source</th>
-                <th className="px-4 py-2">Actions</th>
+                <th className="px-4 py-2 text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {customers.map((customer) => (
-                <tr key={customer._id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-2">{customer.full_name}</td>
-                  <td className="px-4 py-2">{customer.phone_number}</td>
-                  <td className="px-4 py-2 hidden sm:table-cell">{customer.email || '-'}</td>
-                  <td className="px-4 py-2 hidden md:table-cell">{customer.address?.city || '-'}</td>
-                  <td className="px-4 py-2 hidden lg:table-cell capitalize">
-                    {customer.source.replace('_', ' ')}
-                  </td>
-                  <td className="px-4 py-2 flex gap-2 items-center">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => router.push(`/admin/dashboard/customer/view/${customer._id}`)}
-                    >
-                      <Eye size={16} />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => router.push(`/admin/dashboard/customer/edit/${customer._id}`)}
-                    >
-                      <Pencil size={16} />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDelete(customer._id)}
-                    >
-                      <Trash size={16} />
-                    </Button>
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-4 text-gray-500">
+                    Loading customers...
                   </td>
                 </tr>
-              ))}
+              ) : customers.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-4 text-gray-500">
+                    No customers found.
+                  </td>
+                </tr>
+              ) : (
+                customers.map((customer) => (
+                  <tr key={customer._id} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-2">{customer.full_name}</td>
+                    <td className="px-4 py-2">{customer.phone_number}</td>
+                    <td className="px-4 py-2 hidden sm:table-cell">{customer.email || '-'}</td>
+                    <td className="px-4 py-2 hidden md:table-cell">{customer.address?.city || '-'}</td>
+                    <td className="px-4 py-2 hidden lg:table-cell capitalize">
+                      {customer.source.replace('_', ' ')}
+                    </td>
+                    <td className="px-4 py-2 text-center">
+                      <div className="flex justify-center gap-2">
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          onClick={() =>
+                            router.push(`/admin/dashboard/customer/view/${customer._id}`)
+                          }
+                        >
+                          <Eye size={16} />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          onClick={() =>
+                            router.push(`/admin/dashboard/customer/edit/${customer._id}`)
+                          }
+                        >
+                          <Pencil size={16} />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="destructive"
+                          onClick={() => handleDelete(customer._id)}
+                        >
+                          <Trash size={16} />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </Card>
