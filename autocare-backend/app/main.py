@@ -33,11 +33,12 @@ origins = [
 # ✅ Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origin_regex=r"https://.*\.autocare24\.co\.in",  # Allows admin., store., garage., etc.
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # ✅ Include routers (Admin / Store)
 app.include_router(admin_user.router, prefix="/api", tags=["Admin Users"])

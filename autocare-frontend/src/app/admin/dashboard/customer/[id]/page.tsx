@@ -17,19 +17,21 @@ interface Address {
 
 interface Vehicle {
   id: string;
-  model: string;
-  plate_number: string;
+  vehicle_number: string;
+  vehicle_type: string;
   brand?: string;
+  model?: string;
 }
 
 interface LoyaltyCard {
   id: string;
   card_number: string;
-  points: number;
+  points_balance: number;
   tier: string;
 }
 
 interface Customer {
+  id: string;
   full_name: string;
   phone_number: string;
   email?: string;
@@ -48,19 +50,16 @@ export default function EditCustomerPage() {
   const [loyaltyCard, setLoyaltyCard] = useState<LoyaltyCard | null>(null);
 
   useEffect(() => {
-    if (id) {
-      fetchDetails(id as string);
-    }
+    if (id) fetchDetails(id as string);
   }, [id]);
 
   const fetchDetails = async (customerId: string) => {
     try {
       const [cust, vehs, card] = await Promise.all([
-  fetchFromAPI<Customer>(`/api/customers/${customerId}`),
-  fetchFromAPI<Vehicle[]>(`/api/customers/${customerId}/vehicles`),
-  fetchFromAPI<LoyaltyCard | null>(`/api/customers/${customerId}/loyalty-card`),
-]);
-
+        fetchFromAPI<Customer>(`/api/customers/${customerId}`),
+        fetchFromAPI<Vehicle[]>(`/api/customers/${customerId}/vehicles`),
+        fetchFromAPI<LoyaltyCard | null>(`/api/customers/${customerId}/loyalty-card`)
+      ]);
       setCustomer(cust);
       setVehicles(vehs);
       setLoyaltyCard(card);
@@ -187,7 +186,9 @@ export default function EditCustomerPage() {
               <input
                 type="checkbox"
                 checked={customer.is_active}
-                onChange={(e) => setCustomer({ ...customer, is_active: e.target.checked })}
+                onChange={(e) =>
+                  setCustomer({ ...customer, is_active: e.target.checked })
+                }
               />
               <span>Is Active</span>
             </div>
@@ -205,10 +206,11 @@ export default function EditCustomerPage() {
             <div className="space-y-4">
               {vehicles.map((v) => (
                 <Card key={v.id}>
-                  <CardContent className="p-4">
-                    <p className="font-semibold">{v.model}</p>
-                    <p className="text-sm text-gray-500">{v.plate_number}</p>
+                  <CardContent className="p-4 space-y-1">
+                    <p className="font-semibold">{v.vehicle_number}</p>
+                    <p className="text-sm text-gray-600 capitalize">{v.vehicle_type}</p>
                     {v.brand && <p className="text-sm text-gray-400">{v.brand}</p>}
+                    {v.model && <p className="text-sm text-gray-400 italic">{v.model}</p>}
                   </CardContent>
                 </Card>
               ))}
@@ -221,9 +223,9 @@ export default function EditCustomerPage() {
             <p className="text-sm text-gray-500">No loyalty card assigned.</p>
           ) : (
             <Card>
-              <CardContent className="p-4">
+              <CardContent className="p-4 space-y-1">
                 <p><strong>Card Number:</strong> {loyaltyCard.card_number}</p>
-                <p><strong>Points:</strong> {loyaltyCard.points}</p>
+                <p><strong>Points:</strong> {loyaltyCard.points_balance}</p>
                 <p><strong>Tier:</strong> {loyaltyCard.tier}</p>
               </CardContent>
             </Card>

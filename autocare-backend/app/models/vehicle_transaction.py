@@ -1,14 +1,14 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 
 class ServiceTask(BaseModel):
     task_type: str         # e.g., "Oil Change"
     price: float
 
 class VehicleTransaction(BaseModel):
-    id: UUID = Field(default_factory=UUID, alias="_id")
+    id: UUID = Field(default_factory=uuid4, alias="id")
     vehicle_id: UUID
     customer_id: UUID
     store_id: UUID
@@ -23,3 +23,7 @@ class VehicleTransaction(BaseModel):
     class Config:
         allow_population_by_field_name = True
         arbitrary_types_allowed = True
+        json_encoders = {
+            UUID: lambda v: str(v),
+            datetime: lambda v: v.isoformat()
+        }

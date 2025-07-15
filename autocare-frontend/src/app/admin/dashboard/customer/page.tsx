@@ -15,7 +15,7 @@ interface Address {
 }
 
 interface Customer {
-  _id: string;
+  id: string;
   full_name: string;
   phone_number: string;
   email?: string;
@@ -39,7 +39,7 @@ export default function CustomerPage() {
         const data = await fetchFromAPI<Customer[]>(
           `/api/customers?page=${page}&limit=${limit}`
         );
-        setCustomers(Array.isArray(data) ? data : []);
+        setCustomers(Array.isArray(data) ? data.filter((c) => c.is_active) : []);
       } catch (error) {
         console.error('Failed to fetch customers:', error);
       } finally {
@@ -54,7 +54,7 @@ export default function CustomerPage() {
     if (!confirm('Are you sure you want to delete this customer?')) return;
     try {
       await fetchFromAPI(`/api/customers/${id}`, { method: 'DELETE' });
-      setCustomers((prev) => prev.filter((cust) => cust._id !== id));
+      setCustomers((prev) => prev.filter((cust) => cust.id !== id));
     } catch (error) {
       console.error('Failed to delete customer:', error);
     }
@@ -99,11 +99,15 @@ export default function CustomerPage() {
                 </tr>
               ) : (
                 customers.map((customer) => (
-                  <tr key={customer._id} className="border-t hover:bg-gray-50">
+                  <tr key={customer.id} className="border-t hover:bg-gray-50">
                     <td className="px-4 py-2">{customer.full_name}</td>
                     <td className="px-4 py-2">{customer.phone_number}</td>
-                    <td className="px-4 py-2 hidden sm:table-cell">{customer.email || '-'}</td>
-                    <td className="px-4 py-2 hidden md:table-cell">{customer.address?.city || '-'}</td>
+                    <td className="px-4 py-2 hidden sm:table-cell">
+                      {customer.email || '-'}
+                    </td>
+                    <td className="px-4 py-2 hidden md:table-cell">
+                      {customer.address?.city || '-'}
+                    </td>
                     <td className="px-4 py-2 hidden lg:table-cell capitalize">
                       {customer.source.replace('_', ' ')}
                     </td>
@@ -113,7 +117,7 @@ export default function CustomerPage() {
                           size="icon"
                           variant="outline"
                           onClick={() =>
-                            router.push(`/admin/dashboard/customer/view/${customer._id}`)
+                            router.push(`/admin/dashboard/customer/view/${customer.id}`)
                           }
                         >
                           <Eye size={16} />
@@ -122,7 +126,7 @@ export default function CustomerPage() {
                           size="icon"
                           variant="outline"
                           onClick={() =>
-                            router.push(`/admin/dashboard/customer/edit/${customer._id}`)
+                            router.push(`/admin/dashboard/customer/edit/${customer.id}`)
                           }
                         >
                           <Pencil size={16} />
@@ -130,7 +134,7 @@ export default function CustomerPage() {
                         <Button
                           size="icon"
                           variant="destructive"
-                          onClick={() => handleDelete(customer._id)}
+                          onClick={() => handleDelete(customer.id)}
                         >
                           <Trash size={16} />
                         </Button>
@@ -143,7 +147,7 @@ export default function CustomerPage() {
           </table>
         </Card>
 
-        {/* Pagination */}
+        {/* Pagination Controls */}
         <div className="flex justify-between items-center mt-4">
           <Button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
             Previous

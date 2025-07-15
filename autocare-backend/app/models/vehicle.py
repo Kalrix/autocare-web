@@ -1,10 +1,10 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 
 class Vehicle(BaseModel):
-    id: UUID = Field(default_factory=UUID, alias="_id")
+    id: UUID = Field(default_factory=uuid4, alias="id")  # use 'id', not '_id'
     customer_id: UUID
     vehicle_number: str  # unique per vehicle
     vehicle_type: str    # car, bike, SUV, etc.
@@ -21,4 +21,7 @@ class Vehicle(BaseModel):
 
     class Config:
         allow_population_by_field_name = True
-        arbitrary_types_allowed = True
+        json_encoders = {
+            UUID: lambda v: str(v),
+            datetime: lambda v: v.isoformat(),
+        }

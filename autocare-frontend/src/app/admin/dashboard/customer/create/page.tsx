@@ -44,11 +44,30 @@ export default function CreateCustomer() {
   });
 
   const handleSubmit = async () => {
+    const payload: any = {
+      ...formData,
+      address: {
+        line1: formData.address.line1,
+        city: formData.address.city,
+        pincode: formData.address.pincode,
+      },
+    };
+
+    // Optional location if lat/lng are provided
+    if (formData.latitude && formData.longitude) {
+      payload.location = {
+        latitude: parseFloat(formData.latitude),
+        longitude: parseFloat(formData.longitude),
+      };
+    }
+
     try {
       await fetchFromAPI('/api/customers', {
         method: 'POST',
-        body: JSON.stringify(formData),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
+
       router.push('/admin/dashboard/customer');
     } catch (error) {
       console.error('Failed to create customer:', error);
@@ -64,7 +83,6 @@ export default function CreateCustomer() {
           <h2 className="text-2xl font-semibold mb-6">Create Customer</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Full Name */}
             <div>
               <Label>Full Name</Label>
               <Input
@@ -76,7 +94,6 @@ export default function CreateCustomer() {
               />
             </div>
 
-            {/* Phone */}
             <div>
               <Label>Phone Number</Label>
               <Input
@@ -93,7 +110,6 @@ export default function CreateCustomer() {
               />
             </div>
 
-            {/* Email */}
             <div>
               <Label>Email</Label>
               <Input
@@ -105,7 +121,6 @@ export default function CreateCustomer() {
               />
             </div>
 
-            {/* Source */}
             <div>
               <Label>Source</Label>
               <select
@@ -125,7 +140,6 @@ export default function CreateCustomer() {
               </select>
             </div>
 
-            {/* Address Line */}
             <div className="col-span-2">
               <Label>Address Line 1</Label>
               <Input
@@ -140,7 +154,6 @@ export default function CreateCustomer() {
               />
             </div>
 
-            {/* City */}
             <div>
               <Label>City</Label>
               <Input
@@ -155,7 +168,6 @@ export default function CreateCustomer() {
               />
             </div>
 
-            {/* Pincode */}
             <div>
               <Label>Pincode</Label>
               <Input
@@ -170,7 +182,6 @@ export default function CreateCustomer() {
               />
             </div>
 
-            {/* Latitude */}
             <div>
               <Label>Latitude</Label>
               <Input
@@ -182,7 +193,6 @@ export default function CreateCustomer() {
               />
             </div>
 
-            {/* Longitude */}
             <div>
               <Label>Longitude</Label>
               <Input

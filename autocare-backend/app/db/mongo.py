@@ -1,14 +1,19 @@
 # app/db/mongo.py
+
 from motor.motor_asyncio import AsyncIOMotorClient
-from dotenv import load_dotenv
 import os
 
-load_dotenv()  # Load variables from .env
+# ✅ Load from .env only in local environment
+if os.getenv("ENV", "local") == "local":
+    from dotenv import load_dotenv
+    load_dotenv()
 
-MONGO_URI = os.getenv("MONGODB_URI")
+# ✅ Support both MONGO_URI and MONGODB_URI
+MONGO_URI = os.getenv("MONGO_URI") or os.getenv("MONGODB_URI")
 
 if not MONGO_URI:
-    raise ValueError("MONGODB_URI is not set in the .env file")
+    raise ValueError("❌ MongoDB URI not found. Set either MONGO_URI or MONGODB_URI.")
 
+# ✅ Initialize MongoDB client
 client = AsyncIOMotorClient(MONGO_URI)
-db = client["autocare"]  # You can change the DB name if needed
+db = client["autocare"]
