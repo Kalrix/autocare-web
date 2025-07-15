@@ -15,7 +15,7 @@ import { Pencil, Trash2, Plus } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
 
 type Service = {
-  id: string;
+  _id: string;
   name: string;
   duration_minutes: number;
   is_active: boolean;
@@ -23,8 +23,8 @@ type Service = {
 };
 
 type Props = {
-  taskTypeId: string;
-  taskTypeName: string;
+  taskTypeId?: string;
+  taskTypeName?: string;
 };
 
 export default function Subtask({ taskTypeId, taskTypeName }: Props) {
@@ -32,22 +32,27 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
   const [selected, setSelected] = useState<Service | null>(null);
   const [showDialog, setShowDialog] = useState(false);
 
+  const fetchServices = async () => {
+    if (!taskTypeId) return;
+    const res = await fetch(`/api/services?task_type_id=${taskTypeId}`);
+    const data = await res.json();
+    setServices(Array.isArray(data) ? data : []);
+  };
+
   useEffect(() => {
-    fetch(`/api/services?task_type_id=${taskTypeId}`)
-      .then((res) => res.json())
-      .then(setServices);
+    fetchServices();
   }, [taskTypeId]);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (_id: string) => {
     if (!confirm('Are you sure you want to delete this service?')) return;
-    await fetch(`/api/services/${id}`, { method: 'DELETE' });
-    setServices((prev) => prev.filter((s) => s.id !== id));
+    await fetch(`/api/services/${_id}`, { method: 'DELETE' });
+    setServices((prev) => prev.filter((s) => s._id !== _id));
   };
 
   const handleSave = async (data: Partial<Service>) => {
     const method = selected ? 'PUT' : 'POST';
     const url = selected
-      ? `/api/services/${selected.id}`
+      ? `/api/services/${selected._id}`
       : `/api/services`;
 
     const res = await fetch(url, {
@@ -62,7 +67,7 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
 
     setServices((prev) =>
       selected
-        ? prev.map((s) => (s.id === updated.id ? updated : s))
+        ? prev.map((s) => (s._id === updated._id ? updated : s))
         : [...prev, updated]
     );
   };
@@ -70,7 +75,9 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
   return (
     <Card>
       <CardHeader className="flex flex-row justify-between items-center">
-        <CardTitle>{taskTypeName}</CardTitle>
+        <CardTitle>
+          {taskTypeName ? `Subservices for ${taskTypeName}` : 'All Subservices'}
+        </CardTitle>
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogTrigger asChild>
             <Button onClick={() => setSelected(null)}>
@@ -87,6 +94,7 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
           </DialogContent>
         </Dialog>
       </CardHeader>
+
       <CardContent>
         <Table>
           <TableHeader>
@@ -99,12 +107,10 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
           </TableHeader>
           <TableBody>
             {services.map((service) => (
-              <TableRow key={service.id}>
+              <TableRow key={service._id}>
                 <TableCell>{service.name}</TableCell>
                 <TableCell>{service.duration_minutes} min</TableCell>
-                <TableCell>
-                  {service.is_active ? 'Active' : 'Inactive'}
-                </TableCell>
+                <TableCell>{service.is_active ? '✅' : '❌'}</TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button
                     size="sm"
@@ -119,7 +125,7 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
                   <Button
                     size="sm"
                     variant="destructive"
-                    onClick={() => handleDelete(service.id)}
+                    onClick={() => handleDelete(service._id)}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -133,7 +139,6 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
   );
 }
 
-// Reusable form component (basic, extend as needed)
 function ServiceForm({
   service,
   onSave,
