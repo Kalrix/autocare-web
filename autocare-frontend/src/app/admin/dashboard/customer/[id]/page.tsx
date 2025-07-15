@@ -56,10 +56,11 @@ export default function EditCustomerPage() {
   const fetchDetails = async (customerId: string) => {
     try {
       const [cust, vehs, card] = await Promise.all([
-        fetchFromAPI(`/api/customers/${customerId}`),
-        fetchFromAPI(`/api/customers/${customerId}/vehicles`),
-        fetchFromAPI(`/api/customers/${customerId}/loyalty-card`),
-      ]);
+  fetchFromAPI<Customer>(`/api/customers/${customerId}`),
+  fetchFromAPI<Vehicle[]>(`/api/customers/${customerId}/vehicles`),
+  fetchFromAPI<LoyaltyCard | null>(`/api/customers/${customerId}/loyalty-card`),
+]);
+
       setCustomer(cust);
       setVehicles(vehs);
       setLoyaltyCard(card);
