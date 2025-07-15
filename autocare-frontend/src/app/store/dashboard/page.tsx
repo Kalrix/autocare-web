@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import StoreSidebar from '@/app/store/components/StoreSidebar';
+import StoreHeader from '@/app/store/components/StoreHeader';
 
 export default function StoreDashboard() {
   const router = useRouter();
@@ -19,6 +20,8 @@ export default function StoreDashboard() {
       <StoreSidebar />
 
       <div className="flex-1 bg-gray-50">
+        <StoreHeader />
+
         {/* Main Content Placeholder */}
         <main className="flex items-center justify-center h-full p-6">
           <h2 className="text-2xl font-bold text-gray-500">Dashboard Coming Soon 🚧</h2>
