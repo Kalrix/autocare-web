@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { fetchFromAPI } from '@/lib/api';
+import AdminSidebar from '@/app/admin/components/AdminSidebar';
 
 interface Address {
   line1?: string;
@@ -62,17 +63,16 @@ export default function EditCustomerPage() {
       setCustomer(cust);
       setVehicles(vehs);
 
-      // loyalty card call separately so 404 doesn't break everything
       try {
         const card = await fetchFromAPI<LoyaltyCard>(
           `/api/customers/${customerId}/loyalty-card`
         );
         setLoyaltyCard(card);
-      } catch (err: any) {
-        if (err?.message?.includes('404')) {
+      } catch (error: unknown) {
+        if (error instanceof Error && error.message.includes('404')) {
           setLoyaltyCard('not_found');
         } else {
-          console.error('Loyalty card fetch error:', err);
+          console.error('Loyalty card fetch error:', error);
         }
       }
     } catch (error) {
@@ -95,157 +95,182 @@ export default function EditCustomerPage() {
     }
   };
 
-  if (!customer) return <div className="p-6 text-center">Loading customer...</div>;
+  if (!customer) {
+    return (
+      <div className="flex min-h-screen">
+        <AdminSidebar />
+        <div className="p-6 text-center w-full">Loading customer...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Customer Details</h2>
+    <div className="flex min-h-screen">
+      <AdminSidebar />
+      <div className="p-4 max-w-4xl w-full mx-auto">
+        <h2 className="text-2xl font-bold mb-4">Customer Details</h2>
 
-      <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="flex w-full overflow-x-auto">
-          <TabsTrigger value="profile">Edit Info</TabsTrigger>
-          <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
-          <TabsTrigger value="loyalty">Loyalty Card</TabsTrigger>
-        </TabsList>
+        <Tabs defaultValue="profile" className="w-full">
+          <TabsList className="flex w-full overflow-x-auto">
+            <TabsTrigger value="profile">Edit Info</TabsTrigger>
+            <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
+            <TabsTrigger value="loyalty">Loyalty Card</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="profile">
-          <div className="grid gap-4 py-4">
-            <div>
-              <Label>Full Name</Label>
-              <Input
-                value={customer.full_name}
-                onChange={(e) =>
-                  setCustomer({ ...customer, full_name: e.target.value })
-                }
-              />
-            </div>
-
-            <div>
-              <Label>Phone Number</Label>
-              <Input
-                maxLength={10}
-                type="tel"
-                value={customer.phone_number}
-                onChange={(e) => {
-                  const val = e.target.value.replace(/\D/g, '');
-                  setCustomer({ ...customer, phone_number: val });
-                }}
-              />
-            </div>
-
-            <div>
-              <Label>Email</Label>
-              <Input
-                value={customer.email || ''}
-                onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
-              />
-            </div>
-
-            <div className="grid sm:grid-cols-3 gap-4">
+          <TabsContent value="profile">
+            <div className="grid gap-4 py-4">
               <div>
-                <Label>Address Line</Label>
+                <Label>Full Name</Label>
                 <Input
-                  value={customer.address?.line1 || ''}
+                  value={customer.full_name}
                   onChange={(e) =>
-                    setCustomer({
-                      ...customer,
-                      address: { ...customer.address, line1: e.target.value },
-                    })
+                    setCustomer({ ...customer, full_name: e.target.value })
                   }
                 />
               </div>
+
               <div>
-                <Label>City</Label>
+                <Label>Phone Number</Label>
                 <Input
-                  value={customer.address?.city || ''}
+                  maxLength={10}
+                  type="tel"
+                  value={customer.phone_number}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    setCustomer({ ...customer, phone_number: val });
+                  }}
+                />
+              </div>
+
+              <div>
+                <Label>Email</Label>
+                <Input
+                  value={customer.email || ''}
                   onChange={(e) =>
-                    setCustomer({
-                      ...customer,
-                      address: { ...customer.address, city: e.target.value },
-                    })
+                    setCustomer({ ...customer, email: e.target.value })
                   }
                 />
               </div>
+
+              <div className="grid sm:grid-cols-3 gap-4">
+                <div>
+                  <Label>Address Line</Label>
+                  <Input
+                    value={customer.address?.line1 || ''}
+                    onChange={(e) =>
+                      setCustomer({
+                        ...customer,
+                        address: { ...customer.address, line1: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>City</Label>
+                  <Input
+                    value={customer.address?.city || ''}
+                    onChange={(e) =>
+                      setCustomer({
+                        ...customer,
+                        address: { ...customer.address, city: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Pincode</Label>
+                  <Input
+                    value={customer.address?.pincode || ''}
+                    onChange={(e) =>
+                      setCustomer({
+                        ...customer,
+                        address: { ...customer.address, pincode: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
               <div>
-                <Label>Pincode</Label>
-                <Input
-                  value={customer.address?.pincode || ''}
+                <Label>Source</Label>
+                <select
+                  value={customer.source}
                   onChange={(e) =>
                     setCustomer({
                       ...customer,
-                      address: { ...customer.address, pincode: e.target.value },
+                      source: e.target.value as Customer['source'],
                     })
                   }
-                />
+                  className="w-full px-3 py-2 border rounded"
+                >
+                  <option value="main_admin">Main Admin</option>
+                  <option value="hub_admin">Hub Admin</option>
+                  <option value="garage_admin">Garage Admin</option>
+                  <option value="website">Website</option>
+                </select>
               </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={customer.is_active}
+                  onChange={(e) =>
+                    setCustomer({ ...customer, is_active: e.target.checked })
+                  }
+                />
+                <span>Is Active</span>
+              </div>
+
+              <Button onClick={handleSave} disabled={loading}>
+                {loading ? 'Saving...' : 'Save Changes'}
+              </Button>
             </div>
+          </TabsContent>
 
-            <div>
-              <Label>Source</Label>
-              <select
-                value={customer.source}
-                onChange={(e) =>
-                  setCustomer({ ...customer, source: e.target.value as Customer['source'] })
-                }
-                className="w-full px-3 py-2 border rounded"
-              >
-                <option value="main_admin">Main Admin</option>
-                <option value="hub_admin">Hub Admin</option>
-                <option value="garage_admin">Garage Admin</option>
-                <option value="website">Website</option>
-              </select>
-            </div>
+          <TabsContent value="vehicles">
+            {vehicles.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                No vehicles linked to this customer.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {vehicles.map((v) => (
+                  <Card key={v.id}>
+                    <CardContent className="p-4 space-y-1">
+                      <p className="font-semibold">{v.vehicle_number}</p>
+                      <p className="text-sm text-gray-600 capitalize">{v.vehicle_type}</p>
+                      {v.brand && <p className="text-sm text-gray-400">{v.brand}</p>}
+                      {v.model && (
+                        <p className="text-sm text-gray-400 italic">{v.model}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
 
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={customer.is_active}
-                onChange={(e) =>
-                  setCustomer({ ...customer, is_active: e.target.checked })
-                }
-              />
-              <span>Is Active</span>
-            </div>
-
-            <Button onClick={handleSave} disabled={loading}>
-              {loading ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="vehicles">
-          {vehicles.length === 0 ? (
-            <p className="text-sm text-gray-500">No vehicles linked to this customer.</p>
-          ) : (
-            <div className="space-y-4">
-              {vehicles.map((v) => (
-                <Card key={v.id}>
-                  <CardContent className="p-4 space-y-1">
-                    <p className="font-semibold">{v.vehicle_number}</p>
-                    <p className="text-sm text-gray-600 capitalize">{v.vehicle_type}</p>
-                    {v.brand && <p className="text-sm text-gray-400">{v.brand}</p>}
-                    {v.model && <p className="text-sm text-gray-400 italic">{v.model}</p>}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="loyalty">
-          {loyaltyCard === null || loyaltyCard === 'not_found' ? (
-            <p className="text-sm text-gray-500">No loyalty card assigned.</p>
-          ) : (
-            <Card>
-              <CardContent className="p-4 space-y-1">
-                <p><strong>Card Number:</strong> {loyaltyCard.card_number}</p>
-                <p><strong>Points:</strong> {loyaltyCard.points_balance}</p>
-                <p><strong>Tier:</strong> {loyaltyCard.tier}</p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="loyalty">
+            {loyaltyCard === null || loyaltyCard === 'not_found' ? (
+              <p className="text-sm text-gray-500">No loyalty card assigned.</p>
+            ) : (
+              <Card>
+                <CardContent className="p-4 space-y-1">
+                  <p>
+                    <strong>Card Number:</strong> {loyaltyCard.card_number}
+                  </p>
+                  <p>
+                    <strong>Points:</strong> {loyaltyCard.points_balance}
+                  </p>
+                  <p>
+                    <strong>Tier:</strong> {loyaltyCard.tier}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }
