@@ -38,6 +38,17 @@ interface FormData {
   store_id: string;
 }
 
+interface CustomerPayload {
+  full_name: string;
+  phone_number: string;
+  source: CustomerSource;
+  store_id: string;
+  email?: string;
+  address?: Address;
+  latitude?: string;
+  longitude?: string;
+}
+
 export default function CreateCustomer() {
   const router = useRouter();
   const [stores, setStores] = useState<Store[]>([]);
@@ -66,19 +77,18 @@ export default function CreateCustomer() {
 
   const handleSubmit = async () => {
     try {
-      // Check if customer exists
       const allCustomers = await fetchFromAPI<Customer[]>('/api/customers');
-      const existing = allCustomers.find(
+      const exists = allCustomers.find(
         (c: Customer) =>
           c.phone_number === formData.phone_number ||
           (formData.email && c.email === formData.email)
       );
-      if (existing) {
+      if (exists) {
         alert('Customer with this phone or email already exists.');
         return;
       }
 
-      const payload: any = {
+      const payload: CustomerPayload = {
         full_name: formData.full_name,
         phone_number: formData.phone_number,
         source: formData.source,
@@ -86,7 +96,11 @@ export default function CreateCustomer() {
       };
 
       if (formData.email.trim()) payload.email = formData.email;
-      if (formData.address.line1 || formData.address.city || formData.address.pincode) {
+      if (
+        formData.address.line1 ||
+        formData.address.city ||
+        formData.address.pincode
+      ) {
         payload.address = formData.address;
       }
       if (formData.latitude && formData.longitude) {
