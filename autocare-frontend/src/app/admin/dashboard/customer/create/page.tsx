@@ -44,35 +44,37 @@ export default function CreateCustomer() {
   });
 
   const handleSubmit = async () => {
-    const payload: any = {
-      ...formData,
-      address: {
-        line1: formData.address.line1,
-        city: formData.address.city,
-        pincode: formData.address.pincode,
-      },
-    };
-
-    // Optional location if lat/lng are provided
-    if (formData.latitude && formData.longitude) {
-      payload.location = {
+  const payload = {
+    full_name: formData.full_name,
+    phone_number: formData.phone_number,
+    email: formData.email,
+    source: formData.source,
+    address: {
+      line1: formData.address.line1,
+      city: formData.address.city,
+      pincode: formData.address.pincode,
+    },
+    ...(formData.latitude && formData.longitude && {
+      location: {
         latitude: parseFloat(formData.latitude),
         longitude: parseFloat(formData.longitude),
-      };
-    }
-
-    try {
-      await fetchFromAPI('/api/customers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      router.push('/admin/dashboard/customer');
-    } catch (error) {
-      console.error('Failed to create customer:', error);
-    }
+      },
+    }),
   };
+
+  try {
+    await fetchFromAPI('/api/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    router.push('/admin/dashboard/customer');
+  } catch (error) {
+    console.error('Failed to create customer:', error);
+  }
+};
+
 
   return (
     <div className="flex min-h-screen">
