@@ -28,12 +28,11 @@ async def create_task_type(data: TaskTypeCreate):
 
 
 # ----------------------------
-# Get all or filtered task types based on storeType
+# Get all or filtered task types
 # ----------------------------
 @router.get("/task-types", response_model=List[TaskTypeInDB])
 async def get_all_task_types(storeType: Optional[str] = Query(None)):
     query = {}
-
     if storeType == "hub":
         query["allowed_in_hub"] = True
     elif storeType == "garage":
@@ -52,8 +51,7 @@ async def get_all_task_types(storeType: Optional[str] = Query(None)):
             slot_type=task["slot_type"],
             count=int(task["count"]),
             created_at=task["created_at"]
-        )
-        for task in task_types
+        ) for task in task_types
     ]
 
 
