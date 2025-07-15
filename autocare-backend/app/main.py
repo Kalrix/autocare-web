@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# ✅ Import route modules
+# ✅ Route Modules
 from app.routes import (
     admin_user,
     store_admin,
@@ -12,6 +12,8 @@ from app.routes import (
     vehicle,
     loyalty_card,
     vehicle_transaction,
+    services,
+    booking,  # ✅ Optional
 )
 
 app = FastAPI(
@@ -36,20 +38,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ✅ API Routers (Admin + Store Management)
+# ✅ Admin + Store Management APIs
 app.include_router(admin_user.router, prefix="/api", tags=["Admin Users"])
 app.include_router(store_admin.router, prefix="/api", tags=["Store Admin"])
 app.include_router(task_types.router, prefix="/api", tags=["Task Types"])
 app.include_router(store_task_capacities.router, prefix="/api", tags=["Store Task Capacities"])
 app.include_router(garage_hub_tags.router, prefix="/api", tags=["Garage Hub Tags"])
 
-# ✅ API Routers (Customer System)
+# ✅ Customer Ecosystem APIs
 app.include_router(customer.router, prefix="/api", tags=["Customers"])
 app.include_router(vehicle.router, prefix="/api", tags=["Vehicles"])
 app.include_router(loyalty_card.router, prefix="/api", tags=["Loyalty Cards"])
 app.include_router(vehicle_transaction.router, prefix="/api", tags=["Vehicle Transactions"])
 
-# ✅ Health check endpoint
+# ✅ Services & Booking APIs
+app.include_router(services.router, prefix="/api", tags=["Services"])
+app.include_router(booking.router, prefix="/api", tags=["Bookings"])
+
+# ✅ Health Check
 @app.get("/")
 async def root():
     return {"message": "AutoCare Backend is up and running 🚀"}
