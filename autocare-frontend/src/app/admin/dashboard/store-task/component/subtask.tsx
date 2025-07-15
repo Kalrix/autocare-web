@@ -8,52 +8,81 @@ import {
   TableBody,
   TableCell,
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+} from '@/components/ui/dialog';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useState, useEffect } from 'react';
-import { Pencil, Trash2, Plus } from 'lucide-react';
-import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useEffect, useState } from 'react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 
-type Service = {
-  _id: string;
+interface Addon {
   name: string;
-  duration_minutes: number;
-  is_active: boolean;
-  base_price?: number;
-};
+  price: number;
+}
 
-type Props = {
-  taskTypeId?: string;
-  taskTypeName?: string;
-};
+interface Subservice {
+  name: string;
+  description?: string;
+  vehicle_category?: string;
+  price: number;
+  is_optional: boolean;
+  duration_minutes?: number;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  description?: string;
+  duration_minutes?: number;
+  is_active: boolean;
+  addons: Addon[];
+  subservices: Subservice[];
+  icon_url?: string;
+  banner_url?: string;
+}
+
+interface ServicePricing {
+  id: string;
+  vehicle_category: string;
+  base_price: number;
+  labour_charge_type: 'fixed' | 'percentage';
+  labour_charge_value: number;
+  final_price: number;
+  tax_percent: number;
+  include_tax: boolean;
+  store_id?: string;
+}
+
+interface Props {
+  taskTypeId: string;
+  taskTypeName: string;
+}
 
 export default function Subtask({ taskTypeId, taskTypeName }: Props) {
   const [services, setServices] = useState<Service[]>([]);
   const [selected, setSelected] = useState<Service | null>(null);
   const [showDialog, setShowDialog] = useState(false);
 
-  const fetchServices = async () => {
-    if (!taskTypeId) return;
-    const res = await fetch(`/api/services?task_type_id=${taskTypeId}`);
-    const data = await res.json();
-    setServices(Array.isArray(data) ? data : []);
-  };
-
   useEffect(() => {
-    fetchServices();
+    fetch(`/api/services?task_type_id=${taskTypeId}`)
+      .then((res) => res.json())
+      .then(setServices);
   }, [taskTypeId]);
 
-  const handleDelete = async (_id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this service?')) return;
-    await fetch(`/api/services/${_id}`, { method: 'DELETE' });
-    setServices((prev) => prev.filter((s) => s._id !== _id));
+    await fetch(`/api/services/${id}`, { method: 'DELETE' });
+    setServices((prev) => prev.filter((s) => s.id !== id));
   };
 
   const handleSave = async (data: Partial<Service>) => {
     const method = selected ? 'PUT' : 'POST';
-    const url = selected
-      ? `/api/services/${selected._id}`
-      : `/api/services`;
+    const url = selected ? `/api/services/${selected.id}` : `/api/services`;
 
     const res = await fetch(url, {
       method,
@@ -66,23 +95,18 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
     setSelected(null);
 
     setServices((prev) =>
-      selected
-        ? prev.map((s) => (s._id === updated._id ? updated : s))
-        : [...prev, updated]
+      selected ? prev.map((s) => (s.id === updated.id ? updated : s)) : [...prev, updated]
     );
   };
 
   return (
     <Card>
-      <CardHeader className="flex flex-row justify-between items-center">
-        <CardTitle>
-          {taskTypeName ? `Subservices for ${taskTypeName}` : 'All Subservices'}
-        </CardTitle>
+      <CardHeader className="flex items-center justify-between">
+        <CardTitle>Services under {taskTypeName}</CardTitle>
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogTrigger asChild>
             <Button onClick={() => setSelected(null)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Service
+              <Plus className="w-4 h-4 mr-2" /> Add Service
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -94,7 +118,6 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
           </DialogContent>
         </Dialog>
       </CardHeader>
-
       <CardContent>
         <Table>
           <TableHeader>
@@ -102,15 +125,19 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
               <TableHead>Name</TableHead>
               <TableHead>Duration</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Subservices</TableHead>
+              <TableHead>Addons</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {services.map((service) => (
-              <TableRow key={service._id}>
+              <TableRow key={service.id}>
                 <TableCell>{service.name}</TableCell>
                 <TableCell>{service.duration_minutes} min</TableCell>
                 <TableCell>{service.is_active ? '✅' : '❌'}</TableCell>
+                <TableCell>{service.subservices.length}</TableCell>
+                <TableCell>{service.addons.length}</TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button
                     size="sm"
@@ -125,7 +152,7 @@ export default function Subtask({ taskTypeId, taskTypeName }: Props) {
                   <Button
                     size="sm"
                     variant="destructive"
-                    onClick={() => handleDelete(service._id)}
+                    onClick={() => handleDelete(service.id)}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -150,37 +177,92 @@ function ServiceForm({
 }) {
   const [name, setName] = useState(service?.name || '');
   const [duration, setDuration] = useState(service?.duration_minutes || 30);
+  const [addons, setAddons] = useState<Addon[]>(service?.addons || []);
+  const [subservices, setSubservices] = useState<Subservice[]>(service?.subservices || []);
+
+  const addAddon = () => setAddons([...addons, { name: '', price: 0 }]);
+  const updateAddon = (index: number, key: keyof Addon, value: any) => {
+    const updated = [...addons];
+    updated[index][key] = value;
+    setAddons(updated);
+  };
+
+  const addSubservice = () =>
+    setSubservices([
+      ...subservices,
+      { name: '', price: 0, is_optional: true },
+    ]);
+  const updateSub = (index: number, key: keyof Subservice, value: any) => {
+    const updated = [...subservices];
+    updated[index][key] = value;
+    setSubservices(updated);
+  };
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSave({ name, duration_minutes: duration });
+        onSave({ name, duration_minutes: duration, addons, subservices });
       }}
       className="space-y-4"
     >
       <div>
-        <label className="block text-sm font-medium mb-1">Service Name</label>
-        <input
-          className="w-full border rounded px-3 py-2"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
+        <label className="text-sm block mb-1">Service Name</label>
+        <Input value={name} onChange={(e) => setName(e.target.value)} required />
+      </div>
+      <div>
+        <label className="text-sm block mb-1">Duration (mins)</label>
+        <Input
+          type="number"
+          value={duration}
+          onChange={(e) => setDuration(parseInt(e.target.value))}
         />
+      </div>
+      <div>
+        <label className="text-sm font-medium">Addons</label>
+        {addons.map((addon, i) => (
+          <div key={i} className="flex gap-2 mb-2">
+            <Input
+              placeholder="Addon Name"
+              value={addon.name}
+              onChange={(e) => updateAddon(i, 'name', e.target.value)}
+            />
+            <Input
+              type="number"
+              placeholder="Price"
+              value={addon.price}
+              onChange={(e) => updateAddon(i, 'price', parseFloat(e.target.value))}
+            />
+          </div>
+        ))}
+        <Button type="button" size="sm" onClick={addAddon} className="mt-1">
+          + Add Addon
+        </Button>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Duration (mins)</label>
-        <input
-          type="number"
-          className="w-full border rounded px-3 py-2"
-          value={duration}
-          onChange={(e) => setDuration(Number(e.target.value))}
-          required
-        />
+        <label className="text-sm font-medium">Subservices</label>
+        {subservices.map((sub, i) => (
+          <div key={i} className="grid grid-cols-2 gap-2 mb-2">
+            <Input
+              placeholder="Subservice Name"
+              value={sub.name}
+              onChange={(e) => updateSub(i, 'name', e.target.value)}
+            />
+            <Input
+              type="number"
+              placeholder="Price"
+              value={sub.price}
+              onChange={(e) => updateSub(i, 'price', parseFloat(e.target.value))}
+            />
+          </div>
+        ))}
+        <Button type="button" size="sm" onClick={addSubservice} className="mt-1">
+          + Add Subservice
+        </Button>
       </div>
 
-      <div className="flex justify-end space-x-2">
+      <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
