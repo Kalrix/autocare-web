@@ -19,7 +19,9 @@ app = FastAPI(
 # ✅ Define allowed origins (only necessary domains)
 origins = [
     "http://localhost:3000",                   # Local dev
-    "https://admin.autocare24.co.in",          # Production domain
+    "https://admin.autocare24.co.in",
+     "https://store.autocare24.co.in",
+     "https://garage.autocare24.co.in",          # Production domain
     "https://autocare-web-git-main-kalrixs-projects.vercel.app",  # Preview deploy
     "https://autocare-dq6oycixr-kalrixs-projects.vercel.app",      # Preview deploy
 ]
