@@ -44,16 +44,27 @@ export default function AdminDashboard() {
         } bg-white shadow-md transition-all duration-300 overflow-hidden flex flex-col h-screen`}
       >
         <div className="flex items-center justify-between px-4 py-4 border-b">
-          <h2 className={`text-xl font-bold ${sidebarOpen ? 'block' : 'hidden'}`}>AutoCare24</h2>
+          <h2 className={`text-xl font-bold ${sidebarOpen ? 'block' : 'hidden'}`}>
+            AutoCare24
+          </h2>
           <button onClick={toggleSidebar} className="text-gray-600">
             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
 
         <nav className="flex-1 p-2 space-y-1">
-          <NavItem icon={<LayoutDashboard size={20} />} label="Insights" open={sidebarOpen} href="/admin/dashboard" />
-          <NavItem icon={<Store size={20} />} label="Manage Store" open={sidebarOpen} href="/admin/dashboard/manage-store" />
-
+          <NavItem
+            icon={<LayoutDashboard size={20} />}
+            label="Insights"
+            open={sidebarOpen}
+            href="/admin/dashboard"
+          />
+          <NavItem
+            icon={<Store size={20} />}
+            label="Manage Store"
+            open={sidebarOpen}
+            href="/admin/dashboard/manage-store"
+          />
           <Submenu
             icon={<CalendarCheck2 size={20} />}
             label="Bookings"
@@ -80,8 +91,19 @@ export default function AdminDashboard() {
             ]}
           />
 
-          <NavItem icon={<Package size={20} />} label="Product & Service" open={sidebarOpen} href="/inventory" />
-          <NavItem icon={<ListTodo size={20} />} label="Store Tasks" open={sidebarOpen} href="/tasks" />
+          <NavItem
+            icon={<Package size={20} />}
+            label="Product & Service"
+            open={sidebarOpen}
+            href="/inventory"
+          />
+          {/* Updated Store Tasks link */}
+          <NavItem
+            icon={<ListTodo size={20} />}
+            label="Store Tasks"
+            open={sidebarOpen}
+            href="/admin/dashboard/store-task"
+          />
 
           <Submenu
             icon={<Handshake size={20} />}
@@ -99,11 +121,16 @@ export default function AdminDashboard() {
         </nav>
 
         <div className="border-t p-2">
-          <NavItem icon={<LogOut size={20} />} label="Logout" open={sidebarOpen} onClick={handleLogout} />
+          <NavItem
+            icon={<LogOut size={20} />}
+            label="Logout"
+            open={sidebarOpen}
+            onClick={handleLogout}
+          />
         </div>
       </aside>
 
-      <main className="flex-1 p-6" />
+      <main className="flex-1 p-6">{/* Dashboard content goes here */}</main>
     </div>
   );
 }
