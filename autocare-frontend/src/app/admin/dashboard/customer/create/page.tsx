@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import AdminSidebar from '@/app/admin/components/AdminSidebar';
 import { fetchFromAPI } from '@/lib/api';
-import Link from 'next/link';
-import { Loader2 } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 
 type CustomerSource = 'main_admin' | 'hub_admin' | 'garage_admin' | 'website';
 
@@ -21,6 +20,11 @@ interface Address {
 interface Store {
   id: string;
   name: string;
+}
+
+interface Customer {
+  phone_number: string;
+  email?: string;
 }
 
 interface FormData {
@@ -37,9 +41,6 @@ interface FormData {
 export default function CreateCustomer() {
   const router = useRouter();
   const [stores, setStores] = useState<Store[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  
   const [formData, setFormData] = useState<FormData>({
     full_name: '',
     phone_number: '',
@@ -54,41 +55,43 @@ export default function CreateCustomer() {
   useEffect(() => {
     const fetchStores = async () => {
       try {
-        const res = await fetchFromAPI('/api/stores');
-        setStores(res);
-      } catch {
-        setStores([]);
+        const data = await fetchFromAPI<Store[]>('/api/stores');
+        setStores(data);
+      } catch (err) {
+        console.error('Failed to load stores:', err);
       }
     };
     fetchStores();
   }, []);
 
   const handleSubmit = async () => {
-    setLoading(true);
-    setError('');
-
-    const payload: any = {
-      ...formData,
-      address: { ...formData.address },
-    };
-
-    if (formData.latitude && formData.longitude) {
-      payload.latitude = formData.latitude;
-      payload.longitude = formData.longitude;
-    }
-
     try {
-      // Check duplicate by phone or email
-      const existing = await fetchFromAPI('/api/customers');
-      const alreadyExists = existing.some((c: any) => 
-        c.phone_number === formData.phone_number || 
-        (formData.email && c.email === formData.email)
+      // Check if customer exists
+      const allCustomers = await fetchFromAPI<Customer[]>('/api/customers');
+      const existing = allCustomers.find(
+        (c: Customer) =>
+          c.phone_number === formData.phone_number ||
+          (formData.email && c.email === formData.email)
       );
-
-      if (alreadyExists) {
-        setError('Customer already exists with this phone number or email.');
-        setLoading(false);
+      if (existing) {
+        alert('Customer with this phone or email already exists.');
         return;
+      }
+
+      const payload: any = {
+        full_name: formData.full_name,
+        phone_number: formData.phone_number,
+        source: formData.source,
+        store_id: formData.store_id,
+      };
+
+      if (formData.email.trim()) payload.email = formData.email;
+      if (formData.address.line1 || formData.address.city || formData.address.pincode) {
+        payload.address = formData.address;
+      }
+      if (formData.latitude && formData.longitude) {
+        payload.latitude = formData.latitude;
+        payload.longitude = formData.longitude;
       }
 
       await fetchFromAPI('/api/customers', {
@@ -100,35 +103,28 @@ export default function CreateCustomer() {
       router.push('/admin/dashboard/customer');
     } catch (err) {
       console.error('Failed to create customer:', err);
-      setError('Failed to create customer');
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar />
+
       <div className="flex-1 p-6">
-        <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-2xl p-8">
+        <div className="max-w-3xl mx-auto bg-white shadow-xl rounded-2xl p-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-bold text-gray-800">Create Customer</h2>
-            <Link
-              href="/admin/dashboard/customer"
-              className="text-sm text-blue-600 hover:underline"
-            >
-              ← Back to Customers
-            </Link>
+            <h2 className="text-2xl font-bold text-gray-800">Create Customer</h2>
+            <Button variant="ghost" onClick={() => router.back()}>
+              <ChevronLeft className="w-5 h-5 mr-1" />
+              Back
+            </Button>
           </div>
 
-          {error && (
-            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Full Name</Label>
               <Input
+                placeholder="John Doe"
                 value={formData.full_name}
                 onChange={(e) =>
                   setFormData({ ...formData, full_name: e.target.value })
@@ -139,6 +135,8 @@ export default function CreateCustomer() {
             <div>
               <Label>Phone Number</Label>
               <Input
+                type="tel"
+                placeholder="9876543210"
                 value={formData.phone_number}
                 maxLength={10}
                 onChange={(e) => {
@@ -153,6 +151,8 @@ export default function CreateCustomer() {
             <div>
               <Label>Email (optional)</Label>
               <Input
+                type="email"
+                placeholder="john@example.com"
                 value={formData.email}
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
@@ -163,11 +163,14 @@ export default function CreateCustomer() {
             <div>
               <Label>Source</Label>
               <select
-                className="w-full px-3 py-2 border rounded-md"
                 value={formData.source}
                 onChange={(e) =>
-                  setFormData({ ...formData, source: e.target.value as CustomerSource })
+                  setFormData({
+                    ...formData,
+                    source: e.target.value as CustomerSource,
+                  })
                 }
+                className="w-full px-3 py-2 border rounded-md"
               >
                 <option value="main_admin">Main Admin</option>
                 <option value="hub_admin">Hub Admin</option>
@@ -177,16 +180,16 @@ export default function CreateCustomer() {
             </div>
 
             <div className="col-span-2">
-              <Label>Store</Label>
+              <Label>Assign to Store</Label>
               <select
-                className="w-full px-3 py-2 border rounded-md"
                 value={formData.store_id}
                 onChange={(e) =>
                   setFormData({ ...formData, store_id: e.target.value })
                 }
+                className="w-full px-3 py-2 border rounded-md"
               >
-                <option value="">Select Store</option>
-                {stores.map((store) => (
+                <option value="">Select a store</option>
+                {stores.map((store: Store) => (
                   <option key={store.id} value={store.id}>
                     {store.name}
                   </option>
@@ -197,6 +200,7 @@ export default function CreateCustomer() {
             <div className="col-span-2">
               <Label>Address Line 1</Label>
               <Input
+                placeholder="Street, Area"
                 value={formData.address.line1}
                 onChange={(e) =>
                   setFormData({
@@ -210,6 +214,7 @@ export default function CreateCustomer() {
             <div>
               <Label>City</Label>
               <Input
+                placeholder="City"
                 value={formData.address.city}
                 onChange={(e) =>
                   setFormData({
@@ -223,6 +228,7 @@ export default function CreateCustomer() {
             <div>
               <Label>Pincode</Label>
               <Input
+                placeholder="123456"
                 value={formData.address.pincode}
                 onChange={(e) =>
                   setFormData({
@@ -236,6 +242,7 @@ export default function CreateCustomer() {
             <div>
               <Label>Latitude</Label>
               <Input
+                placeholder="e.g. 23.45678"
                 value={formData.latitude}
                 onChange={(e) =>
                   setFormData({ ...formData, latitude: e.target.value })
@@ -246,6 +253,7 @@ export default function CreateCustomer() {
             <div>
               <Label>Longitude</Label>
               <Input
+                placeholder="e.g. 77.12345"
                 value={formData.longitude}
                 onChange={(e) =>
                   setFormData({ ...formData, longitude: e.target.value })
@@ -255,14 +263,7 @@ export default function CreateCustomer() {
           </div>
 
           <div className="mt-6 flex justify-end">
-            <Button
-              disabled={loading}
-              onClick={handleSubmit}
-              className="w-full md:w-auto"
-            >
-              {loading ? <Loader2 className="animate-spin mr-2" /> : null}
-              Create Customer
-            </Button>
+            <Button onClick={handleSubmit}>Create Customer</Button>
           </div>
         </div>
       </div>
