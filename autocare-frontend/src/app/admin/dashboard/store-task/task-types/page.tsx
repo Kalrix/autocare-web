@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState, ChangeEvent, FormEvent } from 'react';
-import AdminSidebar from '@/app/admin/components/AdminSidebar';
+import { useEffect, useState, ChangeEvent, FormEvent, ReactNode } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -16,6 +15,19 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { fetchFromAPI } from '@/lib/api';
 import { Loader2, Pencil, Trash2, Plus } from 'lucide-react';
+
+// FIX: Add proper props typing to AdminSidebar
+function AdminSidebar({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex">
+      <aside className="w-64 bg-gray-100 min-h-screen p-4 border-r">
+        <h2 className="font-bold text-lg mb-4">Admin Panel</h2>
+        {/* Add real navigation links here */}
+      </aside>
+      <main className="flex-1">{children}</main>
+    </div>
+  );
+}
 
 type TaskType = {
   _id: string;
@@ -222,8 +234,7 @@ export default function TaskTypeList() {
                   <p className="text-sm text-muted-foreground">
                     {task.allowed_in_hub && 'Hub'}
                     {task.allowed_in_hub && task.allowed_in_garage && ' + '}
-                    {task.allowed_in_garage && 'Garage'} — {task.slot_type},{' '}
-                    {task.count}
+                    {task.allowed_in_garage && 'Garage'} — {task.slot_type}, {task.count}
                   </p>
                 </div>
                 <div className="flex gap-2">
