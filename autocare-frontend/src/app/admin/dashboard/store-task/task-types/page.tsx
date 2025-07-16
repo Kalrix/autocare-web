@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ChangeEvent, FormEvent } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -26,19 +26,28 @@ type TaskType = {
   created_at: string;
 };
 
+type TaskTypeFormData = {
+  name: string;
+  allowed_in_hub: boolean;
+  allowed_in_garage: boolean;
+  slot_type: 'per_hour' | 'max_per_day';
+  count: number;
+};
+
 export default function TaskTypeList() {
   const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskType | null>(null);
-  const [formData, setFormData] = useState({
+  const [submitting, setSubmitting] = useState(false);
+
+  const [formData, setFormData] = useState<TaskTypeFormData>({
     name: '',
     allowed_in_hub: false,
     allowed_in_garage: false,
     slot_type: 'max_per_day',
     count: 0,
   });
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadTaskTypes();
@@ -79,32 +88,34 @@ export default function TaskTypeList() {
     setFormOpen(true);
   };
 
-  const handleChange = (e: any) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === 'number' ? Number(value) : value,
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitting(true);
 
     try {
-      if (selectedTask) {
-        await fetchFromAPI(`/api/task-types/${selectedTask.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify(formData),
-        });
-        toast.success('Task type updated');
-      } else {
-        await fetchFromAPI('/api/task-types', {
-          method: 'POST',
-          body: JSON.stringify(formData),
-        });
-        toast.success('Task type created');
-      }
+      const method = selectedTask ? 'PATCH' : 'POST';
+      const url = selectedTask
+        ? `/api/task-types/${selectedTask.id}`
+        : '/api/task-types';
+
+      await fetchFromAPI(url, {
+        method,
+        body: JSON.stringify(formData),
+      });
+
+      toast.success(
+        selectedTask ? 'Task type updated' : 'Task type created'
+      );
       setFormOpen(false);
       await loadTaskTypes();
     } catch {
@@ -115,7 +126,8 @@ export default function TaskTypeList() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure?')) return;
+    if (!confirm('Are you sure you want to delete this task type?')) return;
+
     try {
       await fetchFromAPI(`/api/task-types/${id}`, { method: 'DELETE' });
       toast.success('Deleted successfully');
@@ -131,35 +143,48 @@ export default function TaskTypeList() {
         <h2 className="text-2xl font-bold">Task Types</h2>
         <Dialog open={formOpen} onOpenChange={setFormOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => openForm()}><Plus className="mr-2 h-4 w-4" />New</Button>
+            <Button onClick={() => openForm()}>
+              <Plus className="mr-2 h-4 w-4" /> New
+            </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>{selectedTask ? 'Edit Task Type' : 'Create Task Type'}</DialogTitle>
+              <DialogTitle>
+                {selectedTask ? 'Edit Task Type' : 'Create Task Type'}
+              </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 mt-2">
               <div>
                 <Label>Name</Label>
-                <Input name="name" value={formData.name} onChange={handleChange} required />
+                <Input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Allowed in Hub</Label>
                   <Switch
-                    name="allowed_in_hub"
                     checked={formData.allowed_in_hub}
-                    onCheckedChange={(v) =>
-                      setFormData((prev) => ({ ...prev, allowed_in_hub: v }))
+                    onCheckedChange={(val) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        allowed_in_hub: val,
+                      }))
                     }
                   />
                 </div>
                 <div>
                   <Label>Allowed in Garage</Label>
                   <Switch
-                    name="allowed_in_garage"
                     checked={formData.allowed_in_garage}
-                    onCheckedChange={(v) =>
-                      setFormData((prev) => ({ ...prev, allowed_in_garage: v }))
+                    onCheckedChange={(val) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        allowed_in_garage: val,
+                      }))
                     }
                   />
                 </div>
@@ -187,7 +212,9 @@ export default function TaskTypeList() {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : null}
+                {submitting && (
+                  <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                )}
                 {selectedTask ? 'Update' : 'Create'}
               </Button>
             </form>
@@ -196,23 +223,38 @@ export default function TaskTypeList() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center pt-20"><Loader2 className="animate-spin" /></div>
+        <div className="flex justify-center pt-20">
+          <Loader2 className="animate-spin" />
+        </div>
       ) : (
         <div className="grid gap-4">
-          {taskTypes.map((task: TaskType) => (
-            <div key={task.id} className="p-4 border rounded-lg flex justify-between items-center hover:shadow-sm transition">
+          {taskTypes.map((task) => (
+            <div
+              key={task.id}
+              className="p-4 border rounded-lg flex justify-between items-center hover:shadow transition"
+            >
               <div>
                 <h4 className="text-lg font-medium">{task.name}</h4>
                 <p className="text-sm text-muted-foreground">
-                  {task.allowed_in_hub && 'Hub'} {task.allowed_in_hub && task.allowed_in_garage && ' + '}
-                  {task.allowed_in_garage && 'Garage'} — {task.slot_type}, {task.count}
+                  {task.allowed_in_hub && 'Hub'}
+                  {task.allowed_in_hub && task.allowed_in_garage && ' + '}
+                  {task.allowed_in_garage && 'Garage'} — {task.slot_type},{' '}
+                  {task.count}
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="icon" onClick={() => openForm(task)}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => openForm(task)}
+                >
                   <Pencil size={16} />
                 </Button>
-                <Button variant="destructive" size="icon" onClick={() => handleDelete(task.id)}>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => handleDelete(task.id)}
+                >
                   <Trash2 size={16} />
                 </Button>
               </div>
