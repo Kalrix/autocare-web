@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, ChangeEvent, FormEvent } from 'react';
-import AdminSidebar from '../../../components/AdminSidebar';
+import AdminSidebar from '@/app/admin/components/AdminSidebar';
 import {
   Dialog,
   DialogContent,
@@ -27,13 +27,7 @@ type TaskType = {
   created_at: string;
 };
 
-type TaskTypeFormData = {
-  name: string;
-  allowed_in_hub: boolean;
-  allowed_in_garage: boolean;
-  slot_type: 'per_hour' | 'max_per_day';
-  count: number;
-};
+type TaskTypeFormData = Omit<TaskType, '_id' | 'created_at'>;
 
 export default function TaskTypeList() {
   const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
@@ -89,13 +83,11 @@ export default function TaskTypeList() {
     setFormOpen(true);
   };
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'number' ? Number(value) : value,
+      [name]: type === 'number' || name === 'count' ? Number(value) : value,
     }));
   };
 
@@ -104,10 +96,10 @@ export default function TaskTypeList() {
     setSubmitting(true);
 
     try {
-      const method = selectedTaskId ? 'PATCH' : 'POST';
       const url = selectedTaskId
         ? `/api/task-types/${selectedTaskId}`
         : '/api/task-types';
+      const method = selectedTaskId ? 'PATCH' : 'POST';
 
       await fetchFromAPI(url, {
         method,
@@ -169,10 +161,7 @@ export default function TaskTypeList() {
                     <Switch
                       checked={formData.allowed_in_hub}
                       onCheckedChange={(val) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          allowed_in_hub: val,
-                        }))
+                        setFormData((prev) => ({ ...prev, allowed_in_hub: val }))
                       }
                     />
                   </div>
@@ -181,10 +170,7 @@ export default function TaskTypeList() {
                     <Switch
                       checked={formData.allowed_in_garage}
                       onCheckedChange={(val) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          allowed_in_garage: val,
-                        }))
+                        setFormData((prev) => ({ ...prev, allowed_in_garage: val }))
                       }
                     />
                   </div>
