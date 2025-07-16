@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, ChangeEvent, FormEvent } from 'react';
+import AdminSidebar from '../../../components/AdminSidebar';
 import {
   Dialog,
   DialogContent,
@@ -17,7 +18,7 @@ import { fetchFromAPI } from '@/lib/api';
 import { Loader2, Pencil, Trash2, Plus } from 'lucide-react';
 
 type TaskType = {
-  id: string;
+  _id: string;
   name: string;
   allowed_in_hub: boolean;
   allowed_in_garage: boolean;
@@ -38,7 +39,7 @@ export default function TaskTypeList() {
   const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<TaskType | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState<TaskTypeFormData>({
@@ -74,7 +75,7 @@ export default function TaskTypeList() {
         slot_type: task.slot_type,
         count: task.count,
       });
-      setSelectedTask(task);
+      setSelectedTaskId(task._id);
     } else {
       setFormData({
         name: '',
@@ -83,7 +84,7 @@ export default function TaskTypeList() {
         slot_type: 'max_per_day',
         count: 0,
       });
-      setSelectedTask(null);
+      setSelectedTaskId(null);
     }
     setFormOpen(true);
   };
@@ -103,9 +104,9 @@ export default function TaskTypeList() {
     setSubmitting(true);
 
     try {
-      const method = selectedTask ? 'PATCH' : 'POST';
-      const url = selectedTask
-        ? `/api/task-types/${selectedTask.id}`
+      const method = selectedTaskId ? 'PATCH' : 'POST';
+      const url = selectedTaskId
+        ? `/api/task-types/${selectedTaskId}`
         : '/api/task-types';
 
       await fetchFromAPI(url, {
@@ -113,9 +114,7 @@ export default function TaskTypeList() {
         body: JSON.stringify(formData),
       });
 
-      toast.success(
-        selectedTask ? 'Task type updated' : 'Task type created'
-      );
+      toast.success(selectedTaskId ? 'Task type updated' : 'Task type created');
       setFormOpen(false);
       await loadTaskTypes();
     } catch {
@@ -138,130 +137,130 @@ export default function TaskTypeList() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10 space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Task Types</h2>
-        <Dialog open={formOpen} onOpenChange={setFormOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => openForm()}>
-              <Plus className="mr-2 h-4 w-4" /> New
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>
-                {selectedTask ? 'Edit Task Type' : 'Create Task Type'}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-              <div>
-                <Label>Name</Label>
-                <Input
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Allowed in Hub</Label>
-                  <Switch
-                    checked={formData.allowed_in_hub}
-                    onCheckedChange={(val) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        allowed_in_hub: val,
-                      }))
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>Allowed in Garage</Label>
-                  <Switch
-                    checked={formData.allowed_in_garage}
-                    onCheckedChange={(val) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        allowed_in_garage: val,
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-              <div>
-                <Label>Slot Type</Label>
-                <select
-                  name="slot_type"
-                  value={formData.slot_type}
-                  onChange={handleChange}
-                  className="w-full border rounded px-3 py-2"
-                >
-                  <option value="max_per_day">Max Per Day</option>
-                  <option value="per_hour">Per Hour</option>
-                </select>
-              </div>
-              <div>
-                <Label>Count</Label>
-                <Input
-                  type="number"
-                  name="count"
-                  value={formData.count}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting && (
-                  <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                )}
-                {selectedTask ? 'Update' : 'Create'}
+    <AdminSidebar>
+      <div className="max-w-4xl mx-auto px-4 py-10 space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">Task Types</h2>
+          <Dialog open={formOpen} onOpenChange={setFormOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => openForm()}>
+                <Plus className="mr-2 h-4 w-4" /> New
               </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>
+                  {selectedTaskId ? 'Edit Task Type' : 'Create Task Type'}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+                <div>
+                  <Label>Name</Label>
+                  <Input
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Allowed in Hub</Label>
+                    <Switch
+                      checked={formData.allowed_in_hub}
+                      onCheckedChange={(val) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          allowed_in_hub: val,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Allowed in Garage</Label>
+                    <Switch
+                      checked={formData.allowed_in_garage}
+                      onCheckedChange={(val) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          allowed_in_garage: val,
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Slot Type</Label>
+                  <select
+                    name="slot_type"
+                    value={formData.slot_type}
+                    onChange={handleChange}
+                    className="w-full border rounded px-3 py-2"
+                  >
+                    <option value="max_per_day">Max Per Day</option>
+                    <option value="per_hour">Per Hour</option>
+                  </select>
+                </div>
+                <div>
+                  <Label>Count</Label>
+                  <Input
+                    type="number"
+                    name="count"
+                    value={formData.count}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={submitting}>
+                  {submitting && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
+                  {selectedTaskId ? 'Update' : 'Create'}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
 
-      {loading ? (
-        <div className="flex justify-center pt-20">
-          <Loader2 className="animate-spin" />
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          {taskTypes.map((task) => (
-            <div
-              key={task.id}
-              className="p-4 border rounded-lg flex justify-between items-center hover:shadow transition"
-            >
-              <div>
-                <h4 className="text-lg font-medium">{task.name}</h4>
-                <p className="text-sm text-muted-foreground">
-                  {task.allowed_in_hub && 'Hub'}
-                  {task.allowed_in_hub && task.allowed_in_garage && ' + '}
-                  {task.allowed_in_garage && 'Garage'} — {task.slot_type},{' '}
-                  {task.count}
-                </p>
+        {loading ? (
+          <div className="flex justify-center pt-20">
+            <Loader2 className="animate-spin" />
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {taskTypes.map((task) => (
+              <div
+                key={task._id}
+                className="p-4 border rounded-lg flex justify-between items-center hover:shadow transition"
+              >
+                <div>
+                  <h4 className="text-lg font-medium">{task.name}</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {task.allowed_in_hub && 'Hub'}
+                    {task.allowed_in_hub && task.allowed_in_garage && ' + '}
+                    {task.allowed_in_garage && 'Garage'} — {task.slot_type},{' '}
+                    {task.count}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => openForm(task)}
+                  >
+                    <Pencil size={16} />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => handleDelete(task._id)}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => openForm(task)}
-                >
-                  <Pencil size={16} />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => handleDelete(task.id)}
-                >
-                  <Trash2 size={16} />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </AdminSidebar>
   );
 }
