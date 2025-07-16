@@ -12,10 +12,9 @@ import {
   Package,
   LogOut,
   ChevronDown,
-  ListTodo,
   Handshake,
   Wrench,
-} from 'lucide-react';
+} from 'lucide-react'; // 🧼 Removed unused ListTodo
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -23,7 +22,7 @@ export default function AdminDashboard() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [crmMenuOpen, setCrmMenuOpen] = useState(false);
   const [bookingMenuOpen, setBookingMenuOpen] = useState(false);
-  const [taskMenuOpen, setTaskMenuOpen] = useState(false); // ✅ New submenu state
+  const [taskMenuOpen, setTaskMenuOpen] = useState(false);
 
   useEffect(() => {
     const type = localStorage.getItem('user_type');
@@ -100,7 +99,6 @@ export default function AdminDashboard() {
             href="/inventory"
           />
 
-          {/* ✅ Task Engine with Submenu */}
           <Submenu
             icon={<Wrench size={20} />}
             label="Task Engine"
