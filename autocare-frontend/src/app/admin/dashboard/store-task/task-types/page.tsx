@@ -199,7 +199,7 @@ export default function TaskTypeList() {
         <div className="flex justify-center pt-20"><Loader2 className="animate-spin" /></div>
       ) : (
         <div className="grid gap-4">
-          {taskTypes.map((task) => (
+          {taskTypes.map((task: TaskType) => (
             <div key={task.id} className="p-4 border rounded-lg flex justify-between items-center hover:shadow-sm transition">
               <div>
                 <h4 className="text-lg font-medium">{task.name}</h4>
