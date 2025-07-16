@@ -12,8 +12,12 @@ from app.routes import (
     vehicle,
     loyalty_card,
     vehicle_transaction,
+    booking,
+    addons,
+    subservices,
     services,
-    booking,  # ✅ Optional
+    service_pricing,
+    labour_rule,  # ✅ Newly added labour rule route
 )
 
 app = FastAPI(
@@ -50,10 +54,14 @@ app.include_router(customer.router, prefix="/api", tags=["Customers"])
 app.include_router(vehicle.router, prefix="/api", tags=["Vehicles"])
 app.include_router(loyalty_card.router, prefix="/api", tags=["Loyalty Cards"])
 app.include_router(vehicle_transaction.router, prefix="/api", tags=["Vehicle Transactions"])
-
-# ✅ Services & Booking APIs
-app.include_router(services.router, prefix="/api", tags=["Services"])
 app.include_router(booking.router, prefix="/api", tags=["Bookings"])
+
+# ✅ Service Ecosystem APIs
+app.include_router(addons.router, prefix="/api", tags=["Addons"])
+app.include_router(subservices.router, prefix="/api", tags=["Subservices"])
+app.include_router(services.router, prefix="/api", tags=["Services"])
+app.include_router(service_pricing.router, prefix="/api", tags=["Service Pricing"])
+app.include_router(labour_rule.router, prefix="/api", tags=["Labour Rules"])  # ✅ New
 
 # ✅ Health Check
 @app.get("/")

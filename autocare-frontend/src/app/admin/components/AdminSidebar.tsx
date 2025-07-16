@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ListTodo,
   Handshake,
+  Wrench,
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -22,6 +23,7 @@ export default function AdminDashboard() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [crmMenuOpen, setCrmMenuOpen] = useState(false);
   const [bookingMenuOpen, setBookingMenuOpen] = useState(false);
+  const [taskMenuOpen, setTaskMenuOpen] = useState(false); // ✅ New submenu state
 
   useEffect(() => {
     const type = localStorage.getItem('user_type');
@@ -79,18 +81,17 @@ export default function AdminDashboard() {
           />
 
           <Submenu
-  icon={<Users size={20} />}
-  label="Users"
-  open={sidebarOpen}
-  expanded={userMenuOpen}
-  setExpanded={setUserMenuOpen}
-  items={[
-    { label: 'Customers', path: '/admin/dashboard/customer' },
-    { label: 'Vendors', path: '/vendors' },
-    { label: 'OEMs', path: '/oem' },
-  ]}
-/>
-
+            icon={<Users size={20} />}
+            label="Users"
+            open={sidebarOpen}
+            expanded={userMenuOpen}
+            setExpanded={setUserMenuOpen}
+            items={[
+              { label: 'Customers', path: '/admin/dashboard/customer' },
+              { label: 'Vendors', path: '/vendors' },
+              { label: 'OEMs', path: '/oem' },
+            ]}
+          />
 
           <NavItem
             icon={<Package size={20} />}
@@ -98,12 +99,22 @@ export default function AdminDashboard() {
             open={sidebarOpen}
             href="/inventory"
           />
-          {/* Updated Store Tasks link */}
-          <NavItem
-            icon={<ListTodo size={20} />}
-            label="Store Tasks"
+
+          {/* ✅ Task Engine with Submenu */}
+          <Submenu
+            icon={<Wrench size={20} />}
+            label="Task Engine"
             open={sidebarOpen}
-            href="/admin/dashboard/store-task"
+            expanded={taskMenuOpen}
+            setExpanded={setTaskMenuOpen}
+            items={[
+              { label: 'Task Types', path: '/admin/dashboard/store-task/task-types' },
+              { label: 'Services', path: '/admin/dashboard/store-task/services' },
+              { label: 'Subservices', path: '/admin/dashboard/store-task/subservices' },
+              { label: 'Addons', path: '/admin/dashboard/store-task/addons' },
+              { label: 'Service Pricing', path: '/admin/dashboard/store-task/service-pricing' },
+              { label: 'Labour Rules', path: '/admin/dashboard/store-task/labour-rules' },
+            ]}
           />
 
           <Submenu
