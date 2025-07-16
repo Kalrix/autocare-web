@@ -17,8 +17,6 @@ import { toast } from 'sonner';
 import { fetchFromAPI } from '@/lib/api';
 import { Loader2, Pencil, Trash2, Plus } from 'lucide-react';
 
-
-// Types
 interface Service {
   _id: string;
   name: string;
@@ -36,21 +34,16 @@ interface ServiceFormData {
   name: string;
   task_type_id: string;
   tags: string;
-  duration_minutes?: number;
+  duration_unit: 'minutes' | 'hours' | 'days';
+  duration_value: number;
   is_active: boolean;
   is_visible_to_customer: boolean;
-  addon_ids: string;
-  subservice_ids: string;
-}
-
-interface TaskType {
-  _id: string;
-  name: string;
+  addon_ids: string[];
+  subservice_ids: string[];
 }
 
 export default function ServiceList() {
   const [services, setServices] = useState<Service[]>([]);
-  const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
@@ -60,16 +53,16 @@ export default function ServiceList() {
     name: '',
     task_type_id: '',
     tags: '',
-    duration_minutes: undefined,
+    duration_unit: 'minutes',
+    duration_value: 0,
     is_active: true,
     is_visible_to_customer: true,
-    addon_ids: '',
-    subservice_ids: '',
+    addon_ids: [],
+    subservice_ids: [],
   });
 
   useEffect(() => {
     loadServices();
-    loadTaskTypes();
   }, []);
 
   const loadServices = async () => {
@@ -84,38 +77,31 @@ export default function ServiceList() {
     }
   };
 
-  const loadTaskTypes = async () => {
-    try {
-      const data = await fetchFromAPI<TaskType[]>('/api/task-types');
-      setTaskTypes(data);
-    } catch {
-      toast.error('Failed to load task types');
-    }
-  };
-
-  const openForm = (svc?: Service) => {
-    if (svc) {
+  const openForm = (service?: Service) => {
+    if (service) {
       setFormData({
-        name: svc.name,
-        task_type_id: svc.task_type_id,
-        tags: svc.tags.join(', '),
-        duration_minutes: svc.duration_minutes,
-        is_active: svc.is_active,
-        is_visible_to_customer: svc.is_visible_to_customer,
-        addon_ids: svc.addon_ids.join(', '),
-        subservice_ids: svc.subservice_ids.join(', '),
+        name: service.name,
+        task_type_id: service.task_type_id,
+        tags: service.tags.join(', '),
+        duration_unit: 'minutes',
+        duration_value: service.duration_minutes || 0,
+        is_active: service.is_active,
+        is_visible_to_customer: service.is_visible_to_customer,
+        addon_ids: service.addon_ids,
+        subservice_ids: service.subservice_ids,
       });
-      setSelectedServiceId(svc._id);
+      setSelectedServiceId(service._id);
     } else {
       setFormData({
         name: '',
         task_type_id: '',
         tags: '',
-        duration_minutes: undefined,
+        duration_unit: 'minutes',
+        duration_value: 0,
         is_active: true,
         is_visible_to_customer: true,
-        addon_ids: '',
-        subservice_ids: '',
+        addon_ids: [],
+        subservice_ids: [],
       });
       setSelectedServiceId(null);
     }
@@ -123,22 +109,36 @@ export default function ServiceList() {
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'number' || name === 'duration_value' ? Number(value) : value,
+    }));
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitting(true);
-    try {
-      const payload = {
-        ...formData,
-        tags: formData.tags.split(',').map((t) => t.trim()),
-        addon_ids: formData.addon_ids.split(',').map((id) => id.trim()),
-        subservice_ids: formData.subservice_ids.split(',').map((id) => id.trim()),
-        duration_minutes: formData.duration_minutes ? Number(formData.duration_minutes) : undefined,
-      };
 
+    const duration_minutes =
+      formData.duration_unit === 'minutes'
+        ? formData.duration_value
+        : formData.duration_unit === 'hours'
+        ? formData.duration_value * 60
+        : formData.duration_value * 60 * 24;
+
+    const payload = {
+      name: formData.name,
+      task_type_id: formData.task_type_id,
+      tags: formData.tags.split(',').map((t) => t.trim()).filter(Boolean),
+      duration_minutes,
+      is_active: formData.is_active,
+      is_visible_to_customer: formData.is_visible_to_customer,
+      addon_ids: formData.addon_ids,
+      subservice_ids: formData.subservice_ids,
+    };
+
+    try {
       const url = selectedServiceId ? `/api/services/${selectedServiceId}` : '/api/services';
       const method = selectedServiceId ? 'PATCH' : 'POST';
 
@@ -159,6 +159,7 @@ export default function ServiceList() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this service?')) return;
+
     try {
       await fetchFromAPI(`/api/services/${id}`, { method: 'DELETE' });
       toast.success('Deleted successfully');
@@ -171,8 +172,9 @@ export default function ServiceList() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar />
+
       <div className="flex-1 p-6">
-        <div className="max-w-5xl mx-auto space-y-6">
+        <div className="max-w-4xl mx-auto space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Services</h2>
             <Dialog open={formOpen} onOpenChange={setFormOpen}>
@@ -181,47 +183,65 @@ export default function ServiceList() {
                   <Plus className="mr-2 h-4 w-4" /> New
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-lg">
+              <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>{selectedServiceId ? 'Edit Service' : 'Create Service'}</DialogTitle>
+                  <DialogTitle>
+                    {selectedServiceId ? 'Edit Service' : 'Create Service'}
+                  </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 mt-2">
                   <div>
                     <Label>Name</Label>
-                    <Input name="name" value={formData.name} onChange={handleChange} required />
+                    <Input
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
                   <div>
-                    <Label>Task Type</Label>
-                    <select
+                    <Label>Task Type ID</Label>
+                    <Input
                       name="task_type_id"
                       value={formData.task_type_id}
                       onChange={handleChange}
                       required
-                      className="w-full border rounded px-3 py-2"
-                    >
-                      <option value="">Select Task Type</option>
-                      {taskTypes.map((t) => (
-                        <option key={t._id} value={t._id}>
-                          {t.name}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
 
                   <div>
-                    <Label>Tags (comma separated)</Label>
-                    <Input name="tags" value={formData.tags} onChange={handleChange} />
-                  </div>
-
-                  <div>
-                    <Label>Duration (minutes)</Label>
+                    <Label>Tags (comma-separated)</Label>
                     <Input
-                      type="number"
-                      name="duration_minutes"
-                      value={formData.duration_minutes || ''}
+                      name="tags"
+                      value={formData.tags}
                       onChange={handleChange}
                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Duration Value</Label>
+                      <Input
+                        name="duration_value"
+                        type="number"
+                        value={formData.duration_value}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div>
+                      <Label>Unit</Label>
+                      <select
+                        name="duration_unit"
+                        value={formData.duration_unit}
+                        onChange={handleChange}
+                        className="w-full border rounded px-3 py-2"
+                      >
+                        <option value="minutes">Minutes</option>
+                        <option value="hours">Hours</option>
+                        <option value="days">Days</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -245,20 +265,6 @@ export default function ServiceList() {
                     </div>
                   </div>
 
-                  <div>
-                    <Label>Addon IDs (comma separated UUIDs)</Label>
-                    <Input name="addon_ids" value={formData.addon_ids} onChange={handleChange} />
-                  </div>
-
-                  <div>
-                    <Label>Subservice IDs (comma separated UUIDs)</Label>
-                    <Input
-                      name="subservice_ids"
-                      value={formData.subservice_ids}
-                      onChange={handleChange}
-                    />
-                  </div>
-
                   <Button type="submit" className="w-full" disabled={submitting}>
                     {submitting && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
                     {selectedServiceId ? 'Update' : 'Create'}
@@ -274,25 +280,29 @@ export default function ServiceList() {
             </div>
           ) : (
             <div className="grid gap-4">
-              {services.map((svc) => (
+              {services.map((service) => (
                 <div
-                  key={svc._id}
+                  key={service._id}
                   className="p-4 border rounded-lg flex justify-between items-center hover:shadow transition"
                 >
                   <div>
-                    <h4 className="text-lg font-medium">{svc.name}</h4>
+                    <h4 className="text-lg font-medium">{service.name}</h4>
                     <p className="text-sm text-muted-foreground">
-                      Duration: {svc.duration_minutes || '-'} mins, Tags: {svc.tags.join(', ')}
+                      Tags: {service.tags.join(', ')} | Duration: {service.duration_minutes} mins
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="icon" onClick={() => openForm(svc)}>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => openForm(service)}
+                    >
                       <Pencil size={16} />
                     </Button>
                     <Button
                       variant="destructive"
                       size="icon"
-                      onClick={() => handleDelete(svc._id)}
+                      onClick={() => handleDelete(service._id)}
                     >
                       <Trash2 size={16} />
                     </Button>
