@@ -131,7 +131,7 @@ export default function ServiceList() {
         ? formData.duration_value
         : formData.duration_unit === 'hours'
         ? formData.duration_value * 60
-        : formData.duration_value * 60 * 24;
+        : formData.duration_value * 1440; // 60 * 24
 
     const payload = {
       name: formData.name,
@@ -146,15 +146,17 @@ export default function ServiceList() {
       const url = selectedServiceId ? `/api/services/${selectedServiceId}` : '/api/services';
       const method = selectedServiceId ? 'PATCH' : 'POST';
 
-      await fetchFromAPI(url, {
+      const res = await fetchFromAPI(url, {
         method,
         body: JSON.stringify(payload),
       });
 
+      console.log('API response:', res);
       toast.success(selectedServiceId ? 'Service updated' : 'Service created');
       setFormOpen(false);
       await loadServices();
     } catch (error: any) {
+      console.error(error);
       toast.error('Failed to save service');
     } finally {
       setSubmitting(false);
