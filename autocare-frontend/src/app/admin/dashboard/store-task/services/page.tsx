@@ -71,7 +71,7 @@ export default function ServiceList() {
     try {
       const data = await fetchFromAPI<Service[]>('/api/services');
       setServices(data);
-    } catch (e) {
+    } catch {
       toast.error('Failed to load services');
     } finally {
       setLoading(false);
@@ -82,7 +82,7 @@ export default function ServiceList() {
     try {
       const data = await fetchFromAPI<TaskType[]>('/api/task-types');
       setTaskTypes(data);
-    } catch (e) {
+    } catch {
       toast.error('Failed to load task types');
     }
   };
@@ -154,7 +154,7 @@ export default function ServiceList() {
       toast.success(selectedServiceId ? 'Service updated' : 'Service created');
       setFormOpen(false);
       await loadServices();
-    } catch (e) {
+    } catch {
       toast.error('Failed to save service');
     } finally {
       setSubmitting(false);
