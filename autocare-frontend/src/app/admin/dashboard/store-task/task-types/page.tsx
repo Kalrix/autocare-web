@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, ChangeEvent, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
 import AdminSidebar from '@/app/admin/components/AdminSidebar';
 import {
   Dialog,
@@ -31,7 +30,6 @@ type TaskType = {
 type TaskTypeFormData = Omit<TaskType, '_id' | 'created_at'>;
 
 export default function TaskTypeList() {
-  const router = useRouter();
   const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
