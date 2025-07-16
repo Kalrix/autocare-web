@@ -71,7 +71,7 @@ export default function ServiceList() {
     try {
       const data = await fetchFromAPI<Service[]>('/api/services');
       setServices(data);
-    } catch {
+    } catch (e) {
       toast.error('Failed to load services');
     } finally {
       setLoading(false);
@@ -82,7 +82,7 @@ export default function ServiceList() {
     try {
       const data = await fetchFromAPI<TaskType[]>('/api/task-types');
       setTaskTypes(data);
-    } catch {
+    } catch (e) {
       toast.error('Failed to load task types');
     }
   };
@@ -131,7 +131,7 @@ export default function ServiceList() {
         ? formData.duration_value
         : formData.duration_unit === 'hours'
         ? formData.duration_value * 60
-        : formData.duration_value * 1440; // 60 * 24
+        : formData.duration_value * 1440;
 
     const payload = {
       name: formData.name,
@@ -146,17 +146,15 @@ export default function ServiceList() {
       const url = selectedServiceId ? `/api/services/${selectedServiceId}` : '/api/services';
       const method = selectedServiceId ? 'PATCH' : 'POST';
 
-      const res = await fetchFromAPI(url, {
+      await fetchFromAPI(url, {
         method,
         body: JSON.stringify(payload),
       });
 
-      console.log('API response:', res);
       toast.success(selectedServiceId ? 'Service updated' : 'Service created');
       setFormOpen(false);
       await loadServices();
-    } catch (error: any) {
-      console.error(error);
+    } catch (e) {
       toast.error('Failed to save service');
     } finally {
       setSubmitting(false);
@@ -190,19 +188,12 @@ export default function ServiceList() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>
-                    {selectedServiceId ? 'Edit Service' : 'Create Service'}
-                  </DialogTitle>
+                  <DialogTitle>{selectedServiceId ? 'Edit Service' : 'Create Service'}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 mt-2">
                   <div>
                     <Label>Name</Label>
-                    <Input
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                    />
+                    <Input name="name" value={formData.name} onChange={handleChange} required />
                   </div>
 
                   <div>
@@ -225,11 +216,7 @@ export default function ServiceList() {
 
                   <div>
                     <Label>Tags (comma-separated)</Label>
-                    <Input
-                      name="tags"
-                      value={formData.tags}
-                      onChange={handleChange}
-                    />
+                    <Input name="tags" value={formData.tags} onChange={handleChange} />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -305,18 +292,10 @@ export default function ServiceList() {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => openForm(service)}
-                    >
+                    <Button variant="outline" size="icon" onClick={() => openForm(service)}>
                       <Pencil size={16} />
                     </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => handleDelete(service._id)}
-                    >
+                    <Button variant="destructive" size="icon" onClick={() => handleDelete(service._id)}>
                       <Trash2 size={16} />
                     </Button>
                   </div>
