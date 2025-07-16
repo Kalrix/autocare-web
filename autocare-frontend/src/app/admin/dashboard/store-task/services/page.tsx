@@ -17,6 +17,11 @@ import { toast } from 'sonner';
 import { fetchFromAPI } from '@/lib/api';
 import { Loader2, Pencil, Trash2, Plus } from 'lucide-react';
 
+interface TaskType {
+  _id: string;
+  name: string;
+}
+
 interface Service {
   _id: string;
   name: string;
@@ -25,8 +30,6 @@ interface Service {
   duration_minutes?: number;
   is_active: boolean;
   is_visible_to_customer: boolean;
-  addon_ids: string[];
-  subservice_ids: string[];
   created_at: string;
 }
 
@@ -38,12 +41,11 @@ interface ServiceFormData {
   duration_value: number;
   is_active: boolean;
   is_visible_to_customer: boolean;
-  addon_ids: string[];
-  subservice_ids: string[];
 }
 
 export default function ServiceList() {
   const [services, setServices] = useState<Service[]>([]);
+  const [taskTypes, setTaskTypes] = useState<TaskType[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
@@ -57,12 +59,11 @@ export default function ServiceList() {
     duration_value: 0,
     is_active: true,
     is_visible_to_customer: true,
-    addon_ids: [],
-    subservice_ids: [],
   });
 
   useEffect(() => {
     loadServices();
+    loadTaskTypes();
   }, []);
 
   const loadServices = async () => {
@@ -77,6 +78,15 @@ export default function ServiceList() {
     }
   };
 
+  const loadTaskTypes = async () => {
+    try {
+      const data = await fetchFromAPI<TaskType[]>('/api/task-types');
+      setTaskTypes(data);
+    } catch {
+      toast.error('Failed to load task types');
+    }
+  };
+
   const openForm = (service?: Service) => {
     if (service) {
       setFormData({
@@ -87,8 +97,6 @@ export default function ServiceList() {
         duration_value: service.duration_minutes || 0,
         is_active: service.is_active,
         is_visible_to_customer: service.is_visible_to_customer,
-        addon_ids: service.addon_ids,
-        subservice_ids: service.subservice_ids,
       });
       setSelectedServiceId(service._id);
     } else {
@@ -100,8 +108,6 @@ export default function ServiceList() {
         duration_value: 0,
         is_active: true,
         is_visible_to_customer: true,
-        addon_ids: [],
-        subservice_ids: [],
       });
       setSelectedServiceId(null);
     }
@@ -134,8 +140,6 @@ export default function ServiceList() {
       duration_minutes,
       is_active: formData.is_active,
       is_visible_to_customer: formData.is_visible_to_customer,
-      addon_ids: formData.addon_ids,
-      subservice_ids: formData.subservice_ids,
     };
 
     try {
@@ -201,13 +205,21 @@ export default function ServiceList() {
                   </div>
 
                   <div>
-                    <Label>Task Type ID</Label>
-                    <Input
+                    <Label>Task Type</Label>
+                    <select
                       name="task_type_id"
                       value={formData.task_type_id}
                       onChange={handleChange}
+                      className="w-full border rounded px-3 py-2"
                       required
-                    />
+                    >
+                      <option value="">Select a Task Type</option>
+                      {taskTypes.map((t) => (
+                        <option key={t._id} value={t._id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
