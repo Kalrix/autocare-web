@@ -17,7 +17,6 @@ import { toast } from 'sonner';
 import { fetchFromAPI } from '@/lib/api';
 import { Loader2, Pencil, Trash2, Plus } from 'lucide-react';
 
-import { v4 as uuidv4 } from 'uuid';
 
 // Types
 interface Service {
