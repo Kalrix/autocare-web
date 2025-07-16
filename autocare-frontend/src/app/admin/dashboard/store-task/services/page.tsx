@@ -154,7 +154,7 @@ export default function ServiceList() {
       toast.success(selectedServiceId ? 'Service updated' : 'Service created');
       setFormOpen(false);
       await loadServices();
-    } catch {
+    } catch (error: any) {
       toast.error('Failed to save service');
     } finally {
       setSubmitting(false);
@@ -176,7 +176,6 @@ export default function ServiceList() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar />
-
       <div className="flex-1 p-6">
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="flex justify-between items-center">
